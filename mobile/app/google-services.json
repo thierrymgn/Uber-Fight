@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1089591370423",
+    "project_id": "uber-fight",
+    "storage_bucket": "uber-fight.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1089591370423:android:4b7a5aaa7fa02ea9e0a332",
+        "android_client_info": {
+          "package_name": "com.example.mobile_uber_fight"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2F_ZJr74RGNQlnR1iUJb9xCJFmWheUsw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
