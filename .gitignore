@@ -16,6 +16,7 @@ mobile/*.iml
 mobile/.DS_Store
 mobile/captures/
 mobile/.externalNativeBuild/
+mobile/app/google-services.json
 
 # Firebase
 firebase-debug.log
