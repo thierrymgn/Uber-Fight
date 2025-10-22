@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".UberFightApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -12,14 +13,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Mobileuberfight">
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".activities.RegisterActivity"
+            android:parentActivityName=".activities.AuthentificationActivity"
+            android:label="@string/cr_e_un_compte"
+            android:exported="false" />
+        <activity
+            android:name=".activities.AuthentificationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Mobileuberfight.NoActionBar" />
+        <activity
+            android:name=".activities.SplashScreenActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Mobileuberfight.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".activities.HomeActivity"
+            android:label="UberFight"
+            android:exported="false"/>
     </application>
 
 </manifest>
