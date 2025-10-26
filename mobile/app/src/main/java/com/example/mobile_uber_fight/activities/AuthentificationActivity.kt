@@ -11,8 +11,12 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.mobile_uber_fight.R
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 
 class AuthentificationActivity : AppCompatActivity() {
+    private lateinit var auth: FirebaseAuth
     lateinit var tvRegister: TextView
     lateinit var textInputLayoutEmail: TextInputLayout
     lateinit var textInputLayoutPassword: TextInputLayout
@@ -29,10 +33,16 @@ class AuthentificationActivity : AppCompatActivity() {
             insets
         }
 
+        auth = Firebase.auth
+
         tvRegister = findViewById(R.id.tvRegister)
         textInputLayoutEmail = findViewById(R.id.textInputLayoutEmail)
         textInputLayoutPassword = findViewById(R.id.textInputLayoutPassword)
         btnLogin = findViewById(R.id.btnLogin)
+    }
+
+    override fun onStart() {
+        super.onStart()
 
         tvRegister.setOnClickListener {
             Intent(this, RegisterActivity::class.java).also {
@@ -63,8 +73,17 @@ class AuthentificationActivity : AppCompatActivity() {
 
     fun signIn(email: String, password: String) {
         Log.d("AuthentificationActivity", "signIn: $email, $password")
-        Intent(this, HomeActivity::class.java).also {
-            startActivity(it)
+
+        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this) { task ->
+            if (task.isSuccessful) {
+                Intent(this, HomeActivity::class.java).also {
+                    startActivity(it)
+                }
+            } else {
+                textInputLayoutPassword.error = "L'email ou le mot de passe est incorrect"
+                textInputLayoutPassword.isErrorEnabled = true
+                textInputLayoutEmail.isErrorEnabled = true
+            }
         }
     }
 }
