@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SidebarButton from "@/components/sidebar-button";
 
 export default function Sidebar() {
     return (
@@ -8,12 +9,10 @@ export default function Sidebar() {
                     Uber Fight
                 </h2>
                 <nav className="space-y-2">
-                    <Link
+                    <SidebarButton
                         href="/"
-                        className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                    >
-                        🏠 Accueil
-                    </Link>
+                        label="Accueil"
+                    />
                     <Link
                         href="/utilisateurs"
                         className="block px-4 py-2 bg-blue-500 text-white rounded font-medium"
