@@ -3,7 +3,7 @@ import { HomeIcon, UsersIcon, ChartIcon } from "@/components/icons";
 
 export default function Sidebar() {
     const buttons = [
-        {href: "/accueil", label: "Accueil", icon: <HomeIcon />},
+        {href: "/", label: "Accueil", icon: <HomeIcon />},
         {href: "/utilisateurs", label: "Utilisateurs", icon: <UsersIcon />},
         {href: "/statistiques", label: "Statistiques", icon: <ChartIcon />},
         {href: "/parametres", label: "Paramètres", icon: <HomeIcon />},

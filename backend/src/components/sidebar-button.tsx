@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 export interface ISidebarProps {
     href: string;
     label: string;
-    icon?: ReactNode;
+    icon: ReactNode;
 }
 
 export default function SidebarButton({href, label, icon}: ISidebarProps) {
