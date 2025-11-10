@@ -1,5 +1,8 @@
+'use client';
+
 import SidebarButton from "@/components/sidebar-button";
 import { HomeIcon, UsersIcon, ChartIcon } from "@/components/icons";
+import Image from "next/image";
 
 export default function Sidebar() {
     const buttons = [
@@ -11,10 +14,17 @@ export default function Sidebar() {
 
     return (
         <aside className="w-64 bg-white dark:bg-gray-800 shadow-lg">
-            <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
-                    Uber Fight
-                </h2>
+            <div className="p-4">
+                <div>
+                    <Image
+                        src="/logo/ic_logo_uber_fight.png"
+                        alt="Uber Fight Logo"
+                        width={180}
+                        height={60}
+                        className="w-full h-auto"
+                        priority
+                    />
+                </div>
                 <nav className="space-y-2">
                     {
                         buttons.map((button) => (
