@@ -1,7 +1,14 @@
-import Link from "next/link";
 import SidebarButton from "@/components/sidebar-button";
+import { HomeIcon, UsersIcon, ChartIcon } from "@/components/icons";
 
 export default function Sidebar() {
+    const buttons = [
+        {href: "/accueil", label: "Accueil", icon: <HomeIcon />},
+        {href: "/utilisateurs", label: "Utilisateurs", icon: <UsersIcon />},
+        {href: "/statistiques", label: "Statistiques", icon: <ChartIcon />},
+        {href: "/parametres", label: "Paramètres", icon: <HomeIcon />},
+    ];
+
     return (
         <aside className="w-64 bg-white dark:bg-gray-800 shadow-lg">
             <div className="p-6">
@@ -9,28 +16,16 @@ export default function Sidebar() {
                     Uber Fight
                 </h2>
                 <nav className="space-y-2">
-                    <SidebarButton
-                        href="/"
-                        label="Accueil"
-                    />
-                    <Link
-                        href="/utilisateurs"
-                        className="block px-4 py-2 bg-blue-500 text-white rounded font-medium"
-                    >
-                        👥 Utilisateurs
-                    </Link>
-                    <Link
-                        href="#"
-                        className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                    >
-                        📊 Statistiques
-                    </Link>
-                    <Link
-                        href="#"
-                        className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                    >
-                        ⚙️ Paramètres
-                    </Link>
+                    {
+                        buttons.map((button) => (
+                            <SidebarButton
+                                key={button.href}
+                                label={button.label}
+                                href={button.href}
+                                icon={button.icon}
+                            />
+                        ))
+                    }
                 </nav>
             </div>
         </aside>
