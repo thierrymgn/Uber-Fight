@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
     <div className="font-sans min-h-screen p-8 pb-20">
@@ -21,7 +19,7 @@ export default function Home() {
                 👥 Utilisateurs
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Gérez tous les utilisateurs de l'application
+                Gérez tous les utilisateurs de l&#39;application
               </p>
             </a>
 
@@ -45,7 +43,7 @@ export default function Home() {
                 ⚙️ Paramètres
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Configurez les paramètres de l'application
+                Configurez les paramètres de l&#39;application
               </p>
             </a>
 
