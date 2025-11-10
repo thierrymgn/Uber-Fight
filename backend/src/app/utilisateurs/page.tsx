@@ -1,3 +1,5 @@
+import Sidebar from "@/components/sidebar";
+
 export default function UtilisateursPage() {
   // Données utilisateurs factices pour le moment
   const utilisateurs = [
@@ -45,40 +47,7 @@ export default function UtilisateursPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-gray-800 shadow-lg">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
-            Uber Fight
-          </h2>
-          <nav className="space-y-2">
-            <a
-              href="/"
-              className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-            >
-              🏠 Accueil
-            </a>
-            <a
-              href="/utilisateurs"
-              className="block px-4 py-2 bg-blue-500 text-white rounded font-medium"
-            >
-              👥 Utilisateurs
-            </a>
-            <a
-              href="#"
-              className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-            >
-              📊 Statistiques
-            </a>
-            <a
-              href="#"
-              className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-            >
-              ⚙️ Paramètres
-            </a>
-          </nav>
-        </div>
-      </aside>
+      <Sidebar/>
 
       {/* Contenu principal */}
       <main className="flex-1 p-8">
