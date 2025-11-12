@@ -1,7 +1,7 @@
 import InfoSection from "@/app/utilisateurs/components/info-section";
+import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
 
 export default function UtilisateursPage() {
-    // Données utilisateurs factices pour le moment
     const utilisateurs = [
         {
             id: 1,
@@ -24,7 +24,7 @@ export default function UtilisateursPage() {
             nom: "Bernard",
             prenom: "Pierre",
             email: "pierre.bernard@example.com",
-            role: "Modérateur",
+            role: "Bagarreur",
             dateInscription: "2024-03-10"
         },
         {
@@ -107,17 +107,7 @@ export default function UtilisateursPage() {
                                         {utilisateur.email}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              utilisateur.role === "Administrateur"
-                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                                  : utilisateur.role === "Modérateur"
-                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                      : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          }`}
-                      >
-                        {utilisateur.role}
-                      </span>
+                                        <UserRoleTag role={utilisateur.role}/>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                                         {new Date(utilisateur.dateInscription).toLocaleDateString('fr-FR')}
