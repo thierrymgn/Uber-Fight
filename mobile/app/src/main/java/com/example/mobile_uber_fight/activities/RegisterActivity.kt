@@ -2,97 +2,83 @@ package com.example.mobile_uber_fight.activities
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.example.mobile_uber_fight.R
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.auth
+import com.example.mobile_uber_fight.databinding.ActivityRegisterBinding
+import com.example.mobile_uber_fight.repositories.AuthRepository
 
 class RegisterActivity : AppCompatActivity() {
-    private lateinit var auth: FirebaseAuth
-    lateinit var textInputLayoutFullName: TextInputLayout
-    lateinit var textInputLayoutEmail: TextInputLayout
-    lateinit var textInputLayoutPassword: TextInputLayout
-    lateinit var textInputLayoutConfirmPassword: TextInputLayout
-    lateinit var btnRegister: MaterialButton
+
+    private lateinit var binding: ActivityRegisterBinding
+    private val authRepository = AuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_register)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+        binding = ActivityRegisterBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.btnRegister.setOnClickListener { 
+            registerUser()
         }
-
-        auth = Firebase.auth
-
-        textInputLayoutFullName = findViewById(R.id.textInputLayoutFullName)
-        textInputLayoutEmail = findViewById(R.id.textInputLayoutEmail)
-        textInputLayoutPassword = findViewById(R.id.textInputLayoutPassword)
-        textInputLayoutConfirmPassword = findViewById(R.id.textInputLayoutConfirmPassword)
-        btnRegister = findViewById(R.id.btnRegister)
     }
 
-    override fun onStart() {
-        super.onStart()
+    private fun registerUser() {
+        val fullName = binding.textInputLayoutFullName.editText?.text.toString().trim()
+        val email = binding.textInputLayoutEmail.editText?.text.toString().trim()
+        val password = binding.textInputLayoutPassword.editText?.text.toString().trim()
+        val confirmPassword = binding.textInputLayoutConfirmPassword.editText?.text.toString().trim()
 
-        btnRegister.setOnClickListener {
+        if (!validateInput(fullName, email, password, confirmPassword)) {
+            return
+        }
 
-            initErrors()
-
-            val fullName = textInputLayoutFullName.editText?.text.toString()
-            val email = textInputLayoutEmail.editText?.text.toString()
-            val password = textInputLayoutPassword.editText?.text.toString()
-            val confirmPassword = textInputLayoutConfirmPassword.editText?.text.toString()
-
-            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                if (fullName.isEmpty()) {
-                    textInputLayoutFullName.error = "Le Nom Complet est requis"
-                    textInputLayoutFullName.isErrorEnabled = true
-                }
-                if (email.isEmpty()) {
-                    textInputLayoutEmail.error = "L'email est requis"
-                    textInputLayoutEmail.isErrorEnabled = true
-                }
-                if (password.isEmpty()) {
-                    textInputLayoutPassword.error = "Le mot de passe est requis"
-                    textInputLayoutPassword.isErrorEnabled = true
-                }
-                if (confirmPassword.isEmpty()) {
-                    textInputLayoutConfirmPassword.error = "La confirmation du mot de passe est requise"
-                    textInputLayoutConfirmPassword.isErrorEnabled = true
-                }
-            } else {
-                if (password != confirmPassword) {
-                    textInputLayoutConfirmPassword.error = "Les mots de passe ne correspondent pas"
-                    textInputLayoutConfirmPassword.isErrorEnabled = true
-                } else {
-                    auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Intent(this, HomeActivity::class.java).also {
-                                startActivity(it)
-                            }
-                        } else {
-                            textInputLayoutConfirmPassword.error = task.exception?.message
-                            textInputLayoutConfirmPassword.isErrorEnabled = true
-                        }
-                    }
-                }
+        authRepository.register(email, password, fullName)
+            .addOnSuccessListener { 
+                goToHomeActivity()
             }
-        }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
     }
 
-    private fun RegisterActivity.initErrors() {
-        textInputLayoutFullName.isErrorEnabled = false
-        textInputLayoutEmail.isErrorEnabled = false
-        textInputLayoutPassword.isErrorEnabled = false
-        textInputLayoutConfirmPassword.isErrorEnabled = false
+    private fun validateInput(fullName: String, email: String, password: String, confirmPassword: String): Boolean {
+        var isValid = true
+        binding.textInputLayoutFullName.error = null
+        binding.textInputLayoutEmail.error = null
+        binding.textInputLayoutPassword.error = null
+        binding.textInputLayoutConfirmPassword.error = null
+
+        if (fullName.isEmpty()) {
+            binding.textInputLayoutFullName.error = "Le Nom Complet est requis"
+            isValid = false
+        }
+
+        if (email.isEmpty()) {
+            binding.textInputLayoutEmail.error = "L'email est requis"
+            isValid = false
+        }
+
+        if (password.isEmpty()) {
+            binding.textInputLayoutPassword.error = "Le mot de passe est requis"
+            isValid = false
+        }
+
+        if (confirmPassword.isEmpty()) {
+            binding.textInputLayoutConfirmPassword.error = "La confirmation du mot de passe est requise"
+            isValid = false
+        }
+
+        if (password != confirmPassword) {
+            binding.textInputLayoutConfirmPassword.error = "Les mots de passe ne correspondent pas"
+            isValid = false
+        }
+
+        return isValid
+    }
+
+    private fun goToHomeActivity() {
+        val intent = Intent(this, HomeActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
     }
 }
