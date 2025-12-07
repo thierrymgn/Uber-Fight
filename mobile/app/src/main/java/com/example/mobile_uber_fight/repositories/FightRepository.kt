@@ -28,7 +28,7 @@ class FightRepository {
             requesterId = currentUser.uid,
             fighterId = null,
             status = "PENDING",
-            fightType = "UNKNOWN_OPPONENT",
+            fightType = fightType,
             location = GeoPoint(lat, lng),
             address = address,
             scheduledTime = Date()

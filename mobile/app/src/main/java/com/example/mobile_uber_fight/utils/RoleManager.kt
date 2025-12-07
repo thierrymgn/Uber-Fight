@@ -2,8 +2,8 @@ package com.example.mobile_uber_fight.utils
 
 import android.content.Context
 import android.content.Intent
-import com.example.mobile_uber_fight.activities.FighterActivity
-import com.example.mobile_uber_fight.activities.HomeActivity
+import com.example.mobile_uber_fight.activities.ClientHomeActivity
+import com.example.mobile_uber_fight.activities.FighterHomeActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -18,14 +18,15 @@ object RoleManager {
             .addOnSuccessListener { document ->
                 val role = document.getString("role")
                 val intent = when (role) {
-                    "FIGHTER" -> Intent(context, FighterActivity::class.java)
-                    else -> Intent(context, HomeActivity::class.java)
+                    "FIGHTER" -> Intent(context, FighterHomeActivity::class.java)
+                    else -> Intent(context, ClientHomeActivity::class.java) // Default to CLIENT/Home
                 }
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 context.startActivity(intent)
             }
             .addOnFailureListener {
-                val intent = Intent(context, HomeActivity::class.java)
+                // Handle error, maybe default to ClientHomeActivity
+                val intent = Intent(context, ClientHomeActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 context.startActivity(intent)
             }

@@ -5,17 +5,17 @@ import android.view.View
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.mobile_uber_fight.databinding.ActivityHomeBinding
+import com.example.mobile_uber_fight.databinding.ActivityClientHomeBinding
 import com.example.mobile_uber_fight.repositories.FightRepository
 
-class HomeActivity : AppCompatActivity() {
+class ClientHomeActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityHomeBinding
+    private lateinit var binding: ActivityClientHomeBinding
     private val fightRepository = FightRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityHomeBinding.inflate(layoutInflater)
+        binding = ActivityClientHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setupListeners()
@@ -31,16 +31,17 @@ class HomeActivity : AppCompatActivity() {
         val address = binding.etAddress.text.toString().trim()
 
         if (address.isEmpty()) {
-            binding.tilAddress.error = "L\'adresse est requise pour commander un duel"
+            binding.tilAddress.error = "L'adresse est requise pour commander un duel"
             return
         }
-        binding.tilAddress.error = null
+        binding.tilAddress.error = null // Clear error
 
         setLoadingState(true)
 
         val selectedRadioButtonId = binding.rgFightType.checkedRadioButtonId
         val fightType = findViewById<RadioButton>(selectedRadioButtonId).text.toString()
 
+        // Hardcoded location for now (Paris, France)
         val latitude = 48.8566
         val longitude = 2.3522
 
