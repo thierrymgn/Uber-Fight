@@ -56,6 +56,9 @@ class RegisterActivity : AppCompatActivity() {
         if (email.isEmpty()) {
             binding.textInputLayoutEmail.error = "L'email est requis"
             isValid = false
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.textInputLayoutEmail.error = "Format d'email invalide"
+            isValid = false
         }
 
         if (password.isEmpty()) {
@@ -68,7 +71,7 @@ class RegisterActivity : AppCompatActivity() {
             isValid = false
         }
 
-        if (password != confirmPassword) {
+        if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
             binding.textInputLayoutConfirmPassword.error = "Les mots de passe ne correspondent pas"
             isValid = false
         }
