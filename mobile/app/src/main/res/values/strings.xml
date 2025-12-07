@@ -20,4 +20,7 @@
     <string name="contre_un_inconnu">Contre un inconnu</string>
     <string name="contre_moi_m_me">Contre moi-même</string>
     <string name="commander_un_duel">COMMANDER UN DUEL</string>
+    <string name="missions_disponibles">Missions disponibles</string>
+    <string name="aucune_mission_disponible_pour_le_moment">Aucune mission disponible pour le moment.</string>
+    <string name="accepter">ACCEPTER</string>
 </resources>
