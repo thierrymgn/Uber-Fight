@@ -14,6 +14,7 @@ class FightRepository {
         address: String,
         lat: Double,
         lng: Double,
+        fightType: String,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
@@ -27,7 +28,7 @@ class FightRepository {
             requesterId = currentUser.uid,
             fighterId = null,
             status = "PENDING",
-            fightType = "UNKNOWN_OPPONENT", // Par défaut pour le test
+            fightType = "UNKNOWN_OPPONENT",
             location = GeoPoint(lat, lng),
             address = address,
             scheduledTime = Date()

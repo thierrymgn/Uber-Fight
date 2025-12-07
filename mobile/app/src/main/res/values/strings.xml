@@ -14,4 +14,10 @@
     <string name="devenir_bagarreur">Devenir Bagarreur</string>
     <string name="je_suis_disponible_pour_des_combats">Je suis disponible pour des combats.</string>
     <string name="d_j_un_compte_se_connecter">Déjà un compte ? Se connecter</string>
+    <string name="pr_t_en_d_coudre">Prêt à en découdre ?</string>
+    <string name="saisir_une_adresse">Saisir une adresse</string>
+    <string name="type_de_combat">Type de combat</string>
+    <string name="contre_un_inconnu">Contre un inconnu</string>
+    <string name="contre_moi_m_me">Contre moi-même</string>
+    <string name="commander_un_duel">COMMANDER UN DUEL</string>
 </resources>
