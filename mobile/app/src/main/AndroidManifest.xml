@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <application
         android:name=".UberFightApplication"
@@ -12,28 +13,32 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Mobileuberfight">
         <activity
-            android:name=".activities.RegisterActivity"
-            android:parentActivityName=".activities.AuthentificationActivity"
-            android:label="@string/cr_e_un_compte"
-            android:exported="false" />
+            android:name=".activities.RoleSelectionActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Mobileuberfight.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".activities.AuthentificationActivity"
             android:exported="false"
             android:theme="@style/Theme.Mobileuberfight.NoActionBar" />
         <activity
             android:name=".activities.SplashScreenActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Mobileuberfight.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:theme="@style/Theme.Mobileuberfight.NoActionBar" />
         <activity
             android:name=".activities.HomeActivity"
-            android:label="UberFight"
-            android:exported="false"/>
+            android:exported="false" />
+        <activity
+            android:name=".activities.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.FighterActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

@@ -7,4 +7,11 @@
     <string name="nom_complet">Nom Complet</string>
     <string name="confirmez_le_mot_de_passe">Confirmez le mot de passe</string>
     <string name="mot_de_passe">Mot de passe</string>
+    <string name="bienvenue_combatant">Bienvenue Combatant!</string>
+    <string name="comment_souhaitez_vous_utiliser_l_application">Comment souhaitez-vous utiliser l\'application ?</string>
+    <string name="trouver_un_combat">Trouver un combat</string>
+    <string name="je_cherche_un_adversaire_affronter">Je cherche un adversaire à affronter.</string>
+    <string name="devenir_bagarreur">Devenir Bagarreur</string>
+    <string name="je_suis_disponible_pour_des_combats">Je suis disponible pour des combats.</string>
+    <string name="d_j_un_compte_se_connecter">Déjà un compte ? Se connecter</string>
 </resources>

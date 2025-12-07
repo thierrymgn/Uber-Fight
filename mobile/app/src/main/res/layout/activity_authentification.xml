@@ -1,95 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
-    tools:context=".activities.AuthentificationActivity"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
->
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/ic_background_login"
-        android:scaleType="centerCrop"
-        android:alpha="0.4"
-        android:contentDescription="@null"
-    />
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/main"
+        tools:context=".activities.AuthentificationActivity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"
-        android:gravity="center"
-        android:orientation="vertical"
     >
-
         <ImageView
-            android:layout_width="250dp"
-            android:layout_height="250dp"
-            android:src="@drawable/ic_logo_uber_fight"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_background_login"
+            android:scaleType="centerCrop"
+            android:alpha="0.4"
             android:contentDescription="@null"
         />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textInputLayoutEmail"
+        <LinearLayout
             android:layout_width="match_parent"
-            style="@style/ThemeOverlay.Material3.TextInputEditText.OutlinedBox"
-            app:boxBackgroundColor="@color/white"
-            android:hint="@string/email"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:gravity="center"
+            android:orientation="vertical"
         >
-            <com.google.android.material.textfield.TextInputEditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textEmailAddress"
+
+            <ImageView
+                android:layout_width="250dp"
+                android:layout_height="250dp"
+                android:src="@drawable/ic_logo_uber_fight"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="10dp"
+                android:contentDescription="@null"
             />
 
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textInputLayoutPassword"
-            android:layout_width="match_parent"
-            style="@style/ThemeOverlay.Material3.TextInputEditText.OutlinedBox"
-            app:boxBackgroundColor="@color/white"
-            android:hint="@string/password"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            app:passwordToggleEnabled="true"
-        >
-            <com.google.android.material.textfield.TextInputEditText
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayoutEmail"
                 android:layout_width="match_parent"
+                style="@style/ThemeOverlay.Material3.TextInputEditText.OutlinedBox"
+                app:boxBackgroundColor="@color/white"
+                android:hint="@string/email"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword"
+            >
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayoutPassword"
+                android:layout_width="match_parent"
+                style="@style/ThemeOverlay.Material3.TextInputEditText.OutlinedBox"
+                app:boxBackgroundColor="@color/white"
+                android:hint="@string/password"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:passwordToggleEnabled="true"
+            >
+                <com.google.android.material.textfield.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLogin"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:layout_marginTop="50dp"
+                android:layout_gravity="center_horizontal"
+                app:cornerRadius="4dp"
+                android:text="@string/se_connecter"
             />
+        </LinearLayout>
 
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLogin"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="50dp"
-            android:layout_gravity="center_horizontal"
-            app:cornerRadius="4dp"
-            android:text="@string/se_connecter"
+        <TextView
+            android:id="@+id/tvRegister"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cr_e_un_compte"
+            android:textColor="@color/black"
+            android:textAllCaps="true"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="30dp"
         />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvRegister"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/cr_e_un_compte"
-        android:textColor="@color/black"
-        android:textAllCaps="true"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="30dp"
-    />
-</RelativeLayout>
+    </RelativeLayout>
+</layout>
