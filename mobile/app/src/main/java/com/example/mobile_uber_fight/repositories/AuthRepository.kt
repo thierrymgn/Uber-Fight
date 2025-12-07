@@ -11,7 +11,7 @@ class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    fun register(email: String, pass: String, username: String): Task<AuthResult> {
+    fun register(email: String, pass: String, username: String, role: String): Task<AuthResult> {
         return auth.createUserWithEmailAndPassword(email, pass).onSuccessTask { authResult ->
             val firebaseUser = authResult.user
             val uid = firebaseUser?.uid ?: throw IllegalStateException("User UID is null")
@@ -20,6 +20,7 @@ class AuthRepository {
                 uid = uid,
                 username = username,
                 email = email,
+                role = role
             )
 
             val firestoreTask = db.collection("users").document(uid).set(newUser)
@@ -28,7 +29,7 @@ class AuthRepository {
                 if (task.isSuccessful) {
                     Tasks.forResult(authResult)
                 } else {
-                    Tasks.forException(task.exception ?: Exception("Unknown error occurred while creating user document"))
+                    Tasks.forException(task.exception!!)
                 }
             }
         }
