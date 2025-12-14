@@ -1,34 +1,42 @@
 package com.example.mobile_uber_fight.utils
 
-import android.content.Context
-import android.content.Intent
-import com.example.mobile_uber_fight.activities.ClientHomeActivity
-import com.example.mobile_uber_fight.activities.FighterHomeActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.util.Log
 
 object RoleManager {
+    enum class UserRole {
+        FIGHTER,
+        CLIENT,
+        UNKNOWN
+    }
 
-    fun routeUser(context: Context) {
+    fun routeUser(
+        onSuccess: (UserRole) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
         val auth = FirebaseAuth.getInstance()
         val db = FirebaseFirestore.getInstance()
-        val uid = auth.currentUser?.uid ?: return
+        val uid = auth.currentUser?.uid
+
+        if (uid == null) {
+            onFailure(Exception("Utilisateur non connecté."))
+            return
+        }
 
         db.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
-                val role = document.getString("role")
-                val intent = when (role) {
-                    "FIGHTER" -> Intent(context, FighterHomeActivity::class.java)
-                    else -> Intent(context, ClientHomeActivity::class.java) // Default to CLIENT/Home
+                val roleString = document.getString("role")
+                val role = when (roleString) {
+                    "FIGHTER" -> UserRole.FIGHTER
+                    "CLIENT" -> UserRole.CLIENT
+                    else -> UserRole.UNKNOWN
                 }
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                context.startActivity(intent)
+                onSuccess(role)
             }
-            .addOnFailureListener {
-                // Handle error, maybe default to ClientHomeActivity
-                val intent = Intent(context, ClientHomeActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                context.startActivity(intent)
+            .addOnFailureListener { exception ->
+                Log.e("RoleManager", "Erreur lors de la récupération du rôle", exception)
+                onFailure(exception)
             }
     }
 }

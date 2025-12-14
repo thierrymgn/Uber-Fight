@@ -1,6 +1,8 @@
 package com.example.mobile_uber_fight.activities
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mobile_uber_fight.databinding.ActivityRegisterBinding
@@ -36,8 +38,29 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         authRepository.register(email, password, fullName, userRole)
-            .addOnSuccessListener { 
-                RoleManager.routeUser(this)
+            .addOnSuccessListener {
+                RoleManager.routeUser(
+                    onSuccess = { role ->
+                        val intent = when (role) {
+                            RoleManager.UserRole.FIGHTER -> Intent(this, FighterMainActivity::class.java)
+                            RoleManager.UserRole.CLIENT -> Intent(this, ClientMainActivity::class.java)
+                            RoleManager.UserRole.UNKNOWN -> {
+                                Log.w("AuthActivity", "Rôle inconnu, redirection vers RoleSelectionActivity.")
+                                Intent(this, RoleSelectionActivity::class.java)
+                            }
+                        }
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    },
+                    onFailure = { exception ->
+                        Toast.makeText(this, "Impossible de vérifier le rôle: ${exception.message}", Toast.LENGTH_LONG).show()
+                        val intent = Intent(this, AuthentificationActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    }
+                )
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
