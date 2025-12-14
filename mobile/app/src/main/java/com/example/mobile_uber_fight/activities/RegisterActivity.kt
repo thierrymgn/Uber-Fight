@@ -1,21 +1,24 @@
 package com.example.mobile_uber_fight.activities
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mobile_uber_fight.databinding.ActivityRegisterBinding
 import com.example.mobile_uber_fight.repositories.AuthRepository
+import com.example.mobile_uber_fight.utils.RoleManager
 
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
     private val authRepository = AuthRepository()
+    private var userRole: String = "CLIENT"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        userRole = intent.getStringExtra("ROLE") ?: "CLIENT"
 
         binding.btnRegister.setOnClickListener { 
             registerUser()
@@ -32,9 +35,9 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        authRepository.register(email, password, fullName)
+        authRepository.register(email, password, fullName, userRole)
             .addOnSuccessListener { 
-                goToHomeActivity()
+                RoleManager.routeUser(this)
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
@@ -56,9 +59,6 @@ class RegisterActivity : AppCompatActivity() {
         if (email.isEmpty()) {
             binding.textInputLayoutEmail.error = "L'email est requis"
             isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            binding.textInputLayoutEmail.error = "Format d'email invalide"
-            isValid = false
         }
 
         if (password.isEmpty()) {
@@ -71,17 +71,11 @@ class RegisterActivity : AppCompatActivity() {
             isValid = false
         }
 
-        if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
+        if (password != confirmPassword) {
             binding.textInputLayoutConfirmPassword.error = "Les mots de passe ne correspondent pas"
             isValid = false
         }
 
         return isValid
-    }
-
-    private fun goToHomeActivity() {
-        val intent = Intent(this, HomeActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
     }
 }
