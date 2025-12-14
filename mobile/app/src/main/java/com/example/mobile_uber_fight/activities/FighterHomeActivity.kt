@@ -1,7 +1,7 @@
 package com.example.mobile_uber_fight.activities
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -17,17 +17,28 @@ class FighterHomeActivity : AppCompatActivity() {
     private lateinit var fightAdapter: FightAdapter
     private val fightRepository = FightRepository()
 
-    companion object {
-        private const val TAG = "FighterHomeActivity"
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityFighterHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupRecyclerView()
-        listenForFights()
+        listenForActiveFight()
+    }
+
+    private fun listenForActiveFight() {
+        fightRepository.listenToMyActiveFight(
+            onFightFound = {
+                if (it != null) {
+                    navigateToFightDetails(it)
+                } else {
+                    setupRecyclerView()
+                    listenForPendingFights()
+                }
+            },
+            onFailure = {
+                Toast.makeText(this, "Erreur: ${it.message}", Toast.LENGTH_LONG).show()
+            }
+        )
     }
 
     private fun setupRecyclerView() {
@@ -40,7 +51,7 @@ class FighterHomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun listenForFights() {
+    private fun listenForPendingFights() {
         setLoadingState(true)
         fightRepository.listenToPendingFights(
             onUpdate = {
@@ -49,7 +60,6 @@ class FighterHomeActivity : AppCompatActivity() {
             },
             onFailure = { exception ->
                 setLoadingState(false)
-                Log.e(TAG, "Erreur lors de l'écoute des combats", exception)
                 Toast.makeText(this, "Erreur: ${exception.message}", Toast.LENGTH_LONG).show()
             }
         )
@@ -75,6 +85,14 @@ class FighterHomeActivity : AppCompatActivity() {
                 Toast.makeText(this, "Échec de l'acceptation: ${exception.message}", Toast.LENGTH_LONG).show()
             }
         )
+    }
+
+    private fun navigateToFightDetails(fight: Fight) {
+        val intent = Intent(this, FightDetailsActivity::class.java).apply {
+            putExtra("FIGHT_EXTRA", fight)
+        }
+        startActivity(intent)
+        finish()
     }
 
     private fun setLoadingState(isLoading: Boolean) {

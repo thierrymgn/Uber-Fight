@@ -23,4 +23,8 @@
     <string name="missions_disponibles">Missions disponibles</string>
     <string name="aucune_mission_disponible_pour_le_moment">Aucune mission disponible pour le moment.</string>
     <string name="accepter">ACCEPTER</string>
+    <string name="mission_en_cours">Mission en cours</string>
+    <string name="adresse">Adresse</string>
+    <string name="type_de_mission">Type de mission</string>
+    <string name="action_placeholder">Action (Placeholder)</string>
 </resources>

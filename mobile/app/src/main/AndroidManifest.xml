@@ -38,6 +38,9 @@
         <activity
             android:name=".activities.FighterHomeActivity"
             android:exported="false" />
+        <activity
+            android:name=".activities.FightDetailsActivity"
+            android:exported="false" />
 
     </application>
 

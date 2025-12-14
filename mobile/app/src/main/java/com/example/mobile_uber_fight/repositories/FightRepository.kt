@@ -5,7 +5,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
 class FightRepository {
@@ -73,5 +72,32 @@ class FightRepository {
             )
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun listenToMyActiveFight(onFightFound: (Fight?) -> Unit, onFailure: (Exception) -> Unit) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onFightFound(null)
+            return
+        }
+
+        fightsCollection
+            .whereEqualTo("fighterId", currentUser.uid)
+            .whereIn("status", listOf("ACCEPTED", "IN_PROGRESS"))
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    onFailure(e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null && !snapshots.isEmpty) {
+                    val activeFight = snapshots.documents.first().toObject(Fight::class.java)?.copy(
+                        id = snapshots.documents.first().id
+                    )
+                    onFightFound(activeFight)
+                } else {
+                    onFightFound(null)
+                }
+            }
     }
 }
