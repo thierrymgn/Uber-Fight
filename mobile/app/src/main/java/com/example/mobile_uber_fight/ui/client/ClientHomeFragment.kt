@@ -1,23 +1,33 @@
-package com.example.mobile_uber_fight.activities
+package com.example.mobile_uber_fight.ui.client
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.RadioButton
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import com.example.mobile_uber_fight.databinding.ActivityClientHomeBinding
+import androidx.fragment.app.Fragment
+import com.example.mobile_uber_fight.databinding.FragmentClientHomeBinding
 import com.example.mobile_uber_fight.repositories.FightRepository
 
-class ClientHomeActivity : AppCompatActivity() {
+class ClientHomeFragment : Fragment() {
 
-    private lateinit var binding: ActivityClientHomeBinding
+    private var _binding: FragmentClientHomeBinding? = null
+    private val binding get() = _binding!!
+
     private val fightRepository = FightRepository()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityClientHomeBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentClientHomeBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         setupListeners()
     }
 
@@ -34,14 +44,14 @@ class ClientHomeActivity : AppCompatActivity() {
             binding.tilAddress.error = "L'adresse est requise pour commander un duel"
             return
         }
-        binding.tilAddress.error = null // Clear error
+        binding.tilAddress.error = null
 
         setLoadingState(true)
 
         val selectedRadioButtonId = binding.rgFightType.checkedRadioButtonId
-        val fightType = findViewById<RadioButton>(selectedRadioButtonId).text.toString()
+        val fightType = view?.findViewById<RadioButton>(selectedRadioButtonId)?.text.toString()
 
-        // Hardcoded location for now (Paris, France)
+        // (Paris, France)
         val latitude = 48.8566
         val longitude = 2.3522
 
@@ -52,12 +62,12 @@ class ClientHomeActivity : AppCompatActivity() {
             fightType = fightType,
             onSuccess = {
                 setLoadingState(false)
-                Toast.makeText(this, "Votre commande de duel a été envoyée !", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Votre commande de duel a été envoyée !", Toast.LENGTH_LONG).show()
                 binding.etAddress.text?.clear()
             },
             onFailure = { exception ->
                 setLoadingState(false)
-                Toast.makeText(this, "Erreur : ${exception.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Erreur : ${exception.message}", Toast.LENGTH_LONG).show()
             }
         )
     }
@@ -65,5 +75,10 @@ class ClientHomeActivity : AppCompatActivity() {
     private fun setLoadingState(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         binding.btnOrderFight.isEnabled = !isLoading
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
