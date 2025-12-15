@@ -62,10 +62,6 @@ class AuthentificationActivity : AppCompatActivity() {
                     },
                     onFailure = { exception ->
                         Toast.makeText(this, "Impossible de vérifier le rôle: ${exception.message}", Toast.LENGTH_LONG).show()
-                        val intent = Intent(this, AuthentificationActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(intent)
-                        finish()
                     }
                 )
             }
