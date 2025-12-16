@@ -9,13 +9,21 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.mobile_uber_fight.databinding.FragmentClientHomeBinding
 import com.example.mobile_uber_fight.repositories.FightRepository
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 
-class ClientHomeFragment : Fragment() {
+class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private var _binding: FragmentClientHomeBinding? = null
     private val binding get() = _binding!!
 
     private val fightRepository = FightRepository()
+    private lateinit var googleMap: GoogleMap
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,7 +36,25 @@ class ClientHomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val mapFragment = childFragmentManager.findFragmentById(binding.map.id) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+
+        setupBottomSheet()
         setupListeners()
+    }
+
+    private fun setupBottomSheet() {
+        val bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
+        bottomSheetBehavior.peekHeight = 250
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+    }
+
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        val paris = LatLng(48.8566, 2.3522)
+        googleMap.addMarker(MarkerOptions().position(paris).title("Moi"))
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(paris, 15f))
     }
 
     private fun setupListeners() {
