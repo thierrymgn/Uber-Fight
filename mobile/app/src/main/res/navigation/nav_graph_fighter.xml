@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_fighter"
+    app:startDestination="@id/fighterRadarFragment">
+
+    <fragment
+        android:id="@+id/fighterRadarFragment"
+        android:name="com.example.mobile_uber_fight.ui.fighter.FighterRadarFragment"
+        android:label="fragment_fighter_radar"
+        tools:layout="@layout/fragment_fighter_radar" />
+    <fragment
+        android:id="@+id/fighterMissionsFragment"
+        android:name="com.example.mobile_uber_fight.ui.fighter.FighterMissionsFragment"
+        android:label="fragment_fighter_missions"
+        tools:layout="@layout/fragment_fighter_missions" />
+    <fragment
+        android:id="@+id/fighterProfileFragment"
+        android:name="com.example.mobile_uber_fight.ui.fighter.FighterProfileFragment"
+        android:label="fragment_fighter_profile"
+        tools:layout="@layout/fragment_fighter_profile" />
+</navigation>

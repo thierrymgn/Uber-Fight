@@ -7,4 +7,24 @@
     <string name="nom_complet">Nom Complet</string>
     <string name="confirmez_le_mot_de_passe">Confirmez le mot de passe</string>
     <string name="mot_de_passe">Mot de passe</string>
+    <string name="bienvenue_combatant">Bienvenue Combatant!</string>
+    <string name="comment_souhaitez_vous_utiliser_l_application">Comment souhaitez-vous utiliser l\'application ?</string>
+    <string name="trouver_un_combat">Trouver un combat</string>
+    <string name="je_cherche_un_adversaire_affronter">Je cherche un adversaire à affronter.</string>
+    <string name="devenir_bagarreur">Devenir Bagarreur</string>
+    <string name="je_suis_disponible_pour_des_combats">Je suis disponible pour des combats.</string>
+    <string name="d_j_un_compte_se_connecter">Déjà un compte ? Se connecter</string>
+    <string name="pr_t_en_d_coudre">Prêt à en découdre ?</string>
+    <string name="saisir_une_adresse">Saisir une adresse</string>
+    <string name="type_de_combat">Type de combat</string>
+    <string name="contre_un_inconnu">Contre un inconnu</string>
+    <string name="contre_moi_m_me">Contre moi-même</string>
+    <string name="commander_un_duel">COMMANDER UN DUEL</string>
+    <string name="missions_disponibles">Missions disponibles</string>
+    <string name="aucune_mission_disponible_pour_le_moment">Aucune mission disponible pour le moment.</string>
+    <string name="accepter">ACCEPTER</string>
+    <string name="mission_en_cours">Mission en cours</string>
+    <string name="adresse">Adresse</string>
+    <string name="type_de_mission">Type de mission</string>
+    <string name="action_placeholder">Action (Placeholder)</string>
 </resources>
