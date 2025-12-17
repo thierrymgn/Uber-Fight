@@ -95,6 +95,13 @@ class FightRepository {
             .addOnFailureListener { e -> onFailure(e) }
     }
 
+    fun finishFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        fightsCollection.document(fightId)
+            .update("status", "COMPLETED")
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
     fun listenToMyActiveFight(onFightFound: (Fight?) -> Unit, onFailure: (Exception) -> Unit) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
