@@ -8,6 +8,7 @@ import android.widget.RadioButton
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.mobile_uber_fight.databinding.FragmentClientHomeBinding
+import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.repositories.FightRepository
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -16,6 +17,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.firebase.auth.FirebaseAuth
 
 class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
@@ -24,6 +26,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private val fightRepository = FightRepository()
     private lateinit var googleMap: GoogleMap
+    private val userId = FirebaseAuth.getInstance().currentUser!!.uid
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,6 +45,34 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
         setupBottomSheet()
         setupListeners()
+        listenToCurrentRequest()
+    }
+
+    private fun listenToCurrentRequest() {
+        fightRepository.listenToCurrentRequest(userId) { fight ->
+            updateUIBasedOnFightStatus(fight)
+        }
+    }
+
+    private fun updateUIBasedOnFightStatus(fight: Fight?) {
+        when (fight?.status) {
+            "PENDING" -> {
+                binding.formLayout.visibility = View.GONE
+                binding.pendingLayout.visibility = View.VISIBLE
+                binding.acceptedLayout.visibility = View.GONE
+            }
+            "ACCEPTED" -> {
+                binding.formLayout.visibility = View.GONE
+                binding.pendingLayout.visibility = View.GONE
+                binding.acceptedLayout.visibility = View.VISIBLE
+                // binding.tvFighterName.text = "Bagarreur : ${fight.fighterName}"
+            }
+            else -> { // Null or other statuses
+                binding.formLayout.visibility = View.VISIBLE
+                binding.pendingLayout.visibility = View.GONE
+                binding.acceptedLayout.visibility = View.GONE
+            }
+        }
     }
 
     private fun setupBottomSheet() {

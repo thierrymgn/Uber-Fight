@@ -56,6 +56,27 @@ class FightRepository {
             }
     }
 
+    fun listenToCurrentRequest(userId: String, onUpdate: (Fight?) -> Unit) {
+        fightsCollection
+            .whereEqualTo("requesterId", userId)
+            .whereIn("status", listOf("PENDING", "ACCEPTED", "IN_PROGRESS"))
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    onUpdate(null)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null && !snapshots.isEmpty) {
+                    val fight = snapshots.documents.first().toObject(Fight::class.java)?.copy(
+                        id = snapshots.documents.first().id
+                    )
+                    onUpdate(fight)
+                } else {
+                    onUpdate(null)
+                }
+            }
+    }
+
     fun acceptFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         val fighterId = auth.currentUser?.uid
         if (fighterId == null) {
