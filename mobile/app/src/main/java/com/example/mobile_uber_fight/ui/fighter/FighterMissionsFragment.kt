@@ -34,7 +34,7 @@ class FighterMissionsFragment : Fragment() {
     private fun listenForActiveFight() {
         fightRepository.listenToMyActiveFight(
             onFightFound = {
-                if (isAdded) { // Vérifie que le fragment est toujours là
+                if (isAdded) {
                     updateUi(it)
                 }
             },
