@@ -1,23 +1,33 @@
 package com.example.mobile_uber_fight.ui.client
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioButton
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.mobile_uber_fight.databinding.FragmentClientHomeBinding
 import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.repositories.FightRepository
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+import java.util.Locale
+import android.util.Log
 
 class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
@@ -27,6 +37,17 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private val fightRepository = FightRepository()
     private lateinit var googleMap: GoogleMap
     private val userId = FirebaseAuth.getInstance().currentUser!!.uid
+    private var selectedLocation: LatLng? = null
+
+    private val locationPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            enableMyLocation()
+        } else {
+            Toast.makeText(requireContext(), "Permission de localisation refusée", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -65,9 +86,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 binding.formLayout.visibility = View.GONE
                 binding.pendingLayout.visibility = View.GONE
                 binding.acceptedLayout.visibility = View.VISIBLE
-                // binding.tvFighterName.text = "Bagarreur : ${fight.fighterName}"
             }
-            else -> { // Null or other statuses
+            else -> {
                 binding.formLayout.visibility = View.VISIBLE
                 binding.pendingLayout.visibility = View.GONE
                 binding.acceptedLayout.visibility = View.GONE
@@ -83,22 +103,75 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        val paris = LatLng(48.8566, 2.3522)
-        googleMap.addMarker(MarkerOptions().position(paris).title("Moi"))
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(paris, 15f))
+        googleMap.uiSettings.isMyLocationButtonEnabled = false
+
+        googleMap.setOnCameraIdleListener {
+            val center = googleMap.cameraPosition.target
+            selectedLocation = center
+            getAddressFromCoordinates(center)
+        }
+
+        checkLocationPermission()
+    }
+
+    private fun checkLocationPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                enableMyLocation()
+            }
+            else -> {
+                locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun enableMyLocation() {
+        googleMap.isMyLocationEnabled = true
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+                val currentLatLng = LatLng(location.latitude, location.longitude)
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+            }
+        }
+    }
+
+    private fun getAddressFromCoordinates(latLng: LatLng) {
+        lifecycleScope.launch {
+            try {
+                val geocoder = Geocoder(requireContext(), Locale.getDefault())
+                val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+                if (addresses?.isNotEmpty() == true) {
+                    val address = addresses[0]
+                    val addressText = address.getAddressLine(0)
+                    binding.etAddress.setText(addressText)
+                } else {
+                    binding.etAddress.setText("Position sur la carte")
+                }
+            } catch (e: Exception) {
+                binding.etAddress.setText("Position sur la carte")
+            }
+        }
     }
 
     private fun setupListeners() {
         binding.btnOrderFight.setOnClickListener {
             handleOrderFightClick()
         }
+        binding.fabLocateMe.setOnClickListener {
+            checkLocationPermission()
+        }
     }
 
     private fun handleOrderFightClick() {
         val address = binding.etAddress.text.toString().trim()
 
-        if (address.isEmpty()) {
-            binding.tilAddress.error = "L'adresse est requise pour commander un duel"
+        if (address.isEmpty() || selectedLocation == null) {
+            binding.tilAddress.error = "Veuillez sélectionner un lieu sur la carte"
             return
         }
         binding.tilAddress.error = null
@@ -108,19 +181,14 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         val selectedRadioButtonId = binding.rgFightType.checkedRadioButtonId
         val fightType = view?.findViewById<RadioButton>(selectedRadioButtonId)?.text.toString()
 
-        // (Paris, France)
-        val latitude = 48.8566
-        val longitude = 2.3522
-
         fightRepository.createFightRequest(
             address = address,
-            lat = latitude,
-            lng = longitude,
+            lat = selectedLocation!!.latitude,
+            lng = selectedLocation!!.longitude,
             fightType = fightType,
             onSuccess = {
                 setLoadingState(false)
                 Toast.makeText(requireContext(), "Votre commande de duel a été envoyée !", Toast.LENGTH_LONG).show()
-                binding.etAddress.text?.clear()
             },
             onFailure = { exception ->
                 setLoadingState(false)
