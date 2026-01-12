@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Bundle
+import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +19,13 @@ import androidx.lifecycle.lifecycleScope
 import com.example.mobile_uber_fight.databinding.FragmentClientHomeBinding
 import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.repositories.FightRepository
+import com.example.mobile_uber_fight.repositories.UserRepository
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -27,7 +35,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
-import android.util.Log
 
 class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
@@ -35,15 +42,20 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private val binding get() = _binding!!
 
     private val fightRepository = FightRepository()
+    private val userRepository = UserRepository()
     private lateinit var googleMap: GoogleMap
     private val userId = FirebaseAuth.getInstance().currentUser!!.uid
     private var selectedLocation: LatLng? = null
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
+    private var isFirstLocationUpdate = true
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            enableMyLocation()
+            startLocationUpdates()
         } else {
             Toast.makeText(requireContext(), "Permission de localisation refusée", Toast.LENGTH_SHORT).show()
         }
@@ -63,6 +75,9 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
         val mapFragment = childFragmentManager.findFragmentById(binding.map.id) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        setupLocationCallback()
 
         setupBottomSheet()
         setupListeners()
@@ -111,6 +126,14 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             getAddressFromCoordinates(center)
         }
 
+        isFirstLocationUpdate = true
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED) {
+            startLocationUpdates()
+        }
+
         checkLocationPermission()
     }
 
@@ -120,7 +143,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
-                enableMyLocation()
+                startLocationUpdates()
             }
             else -> {
                 locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -129,13 +152,34 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     @SuppressLint("MissingPermission")
-    private fun enableMyLocation() {
+    private fun startLocationUpdates() {
         googleMap.isMyLocationEnabled = true
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (location != null) {
-                val currentLatLng = LatLng(location.latitude, location.longitude)
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+
+        val locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = Priority.PRIORITY_HIGH_ACCURACY
+        }
+
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+    }
+
+    private fun stopLocationUpdates() {
+        fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
+    private fun setupLocationCallback() {
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult.lastLocation?.let { location ->
+                    userRepository.updateUserLocation(location.latitude, location.longitude)
+
+                    if (isFirstLocationUpdate) {
+                        val currentLatLng = LatLng(location.latitude, location.longitude)
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                        isFirstLocationUpdate = false
+                    }
+                }
             }
         }
     }
@@ -163,6 +207,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             handleOrderFightClick()
         }
         binding.fabLocateMe.setOnClickListener {
+            isFirstLocationUpdate = true
             checkLocationPermission()
         }
     }
@@ -200,6 +245,15 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun setLoadingState(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         binding.btnOrderFight.isEnabled = !isLoading
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopLocationUpdates()
     }
 
     override fun onDestroyView() {
