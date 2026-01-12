@@ -8,14 +8,12 @@ import {getFirestore} from "@firebase/firestore";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyAZ3qxW_rdZ8fCSxMai5vsNSpI5wdRzDz8",
-    authDomain: "uber-fight.firebaseapp.com",
-    databaseURL: "https://uber-fight-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "uber-fight",
-    storageBucket: "uber-fight.firebasestorage.app",
-    messagingSenderId: "1089591370423",
-    appId: "1:1089591370423:web:c73cd7d52f67318be0a332",
-    measurementId: "G-5V1Z63ZBZG"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
 };
 
 // Initialize Firebase
