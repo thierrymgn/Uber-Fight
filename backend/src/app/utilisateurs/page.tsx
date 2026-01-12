@@ -1,7 +1,17 @@
 import InfoSection from "@/app/utilisateurs/components/info-section";
 import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
+import {collection, getDocs} from "@firebase/firestore";
+import { db } from "@/lib/firebase";
 
-export default function UtilisateursPage() {
+
+export default async function UtilisateursPage() {
+
+    const snapshot = await getDocs(collection(db, "users"));
+    const users = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+    }));
+    console.log(users);
     const utilisateurs = [
         {
             id: 1,
