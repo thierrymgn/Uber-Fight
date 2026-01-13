@@ -38,4 +38,8 @@ class AuthRepository {
             }
         }
     }
+
+    fun sendPasswordResetEmail(email: String): Task<Void> {
+        return auth.sendPasswordResetEmail(email)
+    }
 }
