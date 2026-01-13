@@ -27,4 +27,19 @@
     <string name="adresse">Adresse</string>
     <string name="type_de_mission">Type de mission</string>
     <string name="action_placeholder">Action (Placeholder)</string>
+
+    <!-- Settings Strings -->
+    <string name="parametres">Paramètres</string>
+    <string name="compte">Compte</string>
+    <string name="modifier_le_profil">Modifier le profil</string>
+    <string name="changer_le_mot_de_passe">Changer le mot de passe</string>
+    <string name="paiement">Paiement</string>
+    <string name="gerer_les_moyens_de_paiement">Gérer les moyens de paiement</string>
+    <string name="preferences">Préférences</string>
+    <string name="notifications">Notifications</string>
+    <string name="mode_sombre">Mode sombre</string>
+    <string name="legal_support">Légal &amp; Support</string>
+    <string name="centre_d_aide">Centre d\'aide</string>
+    <string name="conditions_d_utilisation">Conditions d\'utilisation</string>
+    <string name="deconnexion">DÉCONNEXION</string>
 </resources>

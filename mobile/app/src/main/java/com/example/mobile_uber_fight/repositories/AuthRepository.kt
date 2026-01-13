@@ -1,6 +1,7 @@
 package com.example.mobile_uber_fight.repositories
 
 import com.example.mobile_uber_fight.models.User
+import com.example.mobile_uber_fight.models.UserSettings
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthResult
@@ -23,13 +24,16 @@ class AuthRepository {
                 role = role
             )
 
-            val firestoreTask = db.collection("users").document(uid).set(newUser)
+            val defaultSettings = UserSettings()
 
-            firestoreTask.continueWithTask { task ->
+            val userTask = db.collection("users").document(uid).set(newUser)
+            val settingsTask = db.collection("userSettings").document(uid).set(defaultSettings)
+
+            Tasks.whenAll(userTask, settingsTask).continueWithTask { task ->
                 if (task.isSuccessful) {
                     Tasks.forResult(authResult)
                 } else {
-                    Tasks.forException(task.exception!!)
+                    Tasks.forException(task.exception ?: Exception("Error creating user data"))
                 }
             }
         }
