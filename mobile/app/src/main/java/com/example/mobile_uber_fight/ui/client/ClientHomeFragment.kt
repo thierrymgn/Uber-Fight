@@ -10,9 +10,12 @@ import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.RadioButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,15 +28,25 @@ import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.models.User
 import com.example.mobile_uber_fight.repositories.FightRepository
 import com.example.mobile_uber_fight.repositories.UserRepository
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import androidx.core.graphics.createBitmap
 
@@ -46,15 +59,19 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private val userRepository = UserRepository()
     private lateinit var googleMap: GoogleMap
     private val userId = FirebaseAuth.getInstance().currentUser!!.uid
+    
     private var selectedLocation: LatLng? = null
     private var currentUserLocation: Location? = null
     private var fightersList: List<User> = emptyList()
+    private var currentFightId: String? = null
+    private var isSearchingAddress = false
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private var isFirstLocationUpdate = true
 
     companion object {
+        private const val TAG = "ClientHomeFragment"
         private const val RADIUS_IN_METERS = 4000.0
     }
 
@@ -83,14 +100,33 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private fun listenToCurrentRequest() {
         fightRepository.listenToCurrentRequest(userId) { fight ->
+            currentFightId = fight?.id
             updateUIBasedOnFightStatus(fight)
         }
     }
 
     private fun updateUIBasedOnFightStatus(fight: Fight?) {
-        binding.formLayout.visibility = if (fight == null) View.VISIBLE else View.GONE
-        binding.pendingLayout.visibility = if (fight?.status == "PENDING") View.VISIBLE else View.GONE
-        binding.acceptedLayout.visibility = if (fight?.status == "ACCEPTED") View.VISIBLE else View.GONE
+        when (fight?.status) {
+            "PENDING" -> {
+                binding.formLayout.visibility = View.GONE
+                binding.pendingLayout.visibility = View.VISIBLE
+                binding.acceptedLayout.visibility = View.GONE
+                binding.ivMapCenterPin.visibility = View.GONE
+            }
+            "ACCEPTED" -> {
+                binding.formLayout.visibility = View.GONE
+                binding.pendingLayout.visibility = View.GONE
+                binding.acceptedLayout.visibility = View.VISIBLE
+                binding.ivMapCenterPin.visibility = View.GONE
+                binding.tvFighterName.text = "Bagarreur en route !"
+            }
+            else -> {
+                binding.formLayout.visibility = View.VISIBLE
+                binding.pendingLayout.visibility = View.GONE
+                binding.acceptedLayout.visibility = View.GONE
+                binding.ivMapCenterPin.visibility = View.VISIBLE
+            }
+        }
     }
 
     private fun setupBottomSheet() {
@@ -105,14 +141,14 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         googleMap.uiSettings.isMyLocationButtonEnabled = false
 
         googleMap.setOnCameraIdleListener {
-            val center = googleMap.cameraPosition.target
-            selectedLocation = center
-            getAddressFromCoordinates(center)
+            if (!isSearchingAddress) {
+                val center = googleMap.cameraPosition.target
+                selectedLocation = center
+                getAddressFromCoordinates(center)
+            }
         }
 
         checkLocationPermission()
-
-        // Listen to fighters from Firestore
         userRepository.listenToNearbyFighters { fighters ->
             this.fightersList = fighters
             displayFightersOnMap()
@@ -121,27 +157,17 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private fun displayFightersOnMap() {
         if (!::googleMap.isInitialized) return
-
         val myLocation = currentUserLocation ?: return
-
-        googleMap.clear() // Remove old markers
-
+        googleMap.clear()
         fightersList.forEach { fighter ->
             val fighterLoc = fighter.location ?: return@forEach
-
             val results = FloatArray(1)
-            Location.distanceBetween(
-                myLocation.latitude, myLocation.longitude,
-                fighterLoc.latitude, fighterLoc.longitude,
-                results
-            )
-
+            Location.distanceBetween(myLocation.latitude, myLocation.longitude, fighterLoc.latitude, fighterLoc.longitude, results)
             if (results[0] <= RADIUS_IN_METERS) {
                 googleMap.addMarker(MarkerOptions()
                     .position(LatLng(fighterLoc.latitude, fighterLoc.longitude))
                     .title("${fighter.username} ⭐ ${fighter.rating}")
-                    .icon(bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker))
-                )
+                    .icon(bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)))
             }
         }
     }
@@ -163,10 +189,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 locationResult.lastLocation?.let { location ->
                     currentUserLocation = location
                     userRepository.updateUserLocation(location.latitude, location.longitude)
-
-                    // Refresh markers with new location
-                    displayFightersOnMap()
-
+                    if (fightersList.isNotEmpty()) displayFightersOnMap()
                     if (isFirstLocationUpdate) {
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15f))
                         isFirstLocationUpdate = false
@@ -176,12 +199,104 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            startLocationUpdates()
-        } else {
-            locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    private fun getAddressFromCoordinates(latLng: LatLng) {
+        lifecycleScope.launch {
+            try {
+                val geocoder = Geocoder(requireContext(), Locale.getDefault())
+                val addresses = withContext(Dispatchers.IO) { geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1) }
+                binding.etAddress.setText(addresses?.firstOrNull()?.getAddressLine(0) ?: "Position sur la carte")
+            } catch (e: Exception) { binding.etAddress.setText("Position sur la carte") }
         }
+    }
+
+    private fun setupListeners() {
+        binding.btnOrderFight.setOnClickListener { handleOrderFightClick() }
+        binding.btnCancelSearch.setOnClickListener { handleCancelFightClick() }
+        binding.fabLocateMe.setOnClickListener {
+            isFirstLocationUpdate = true
+            checkLocationPermission()
+        }
+
+        binding.etAddress.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                searchAddress(v.text.toString())
+                hideKeyboard(v)
+                true
+            } else false
+        }
+    }
+
+    private fun searchAddress(addressText: String) {
+        if (addressText.isEmpty()) return
+        lifecycleScope.launch {
+            try {
+                isSearchingAddress = true
+                val geocoder = Geocoder(requireContext(), Locale.getDefault())
+                val addresses = withContext(Dispatchers.IO) { geocoder.getFromLocationName(addressText, 1) }
+                if (!addresses.isNullOrEmpty()) {
+                    val address = addresses[0]
+                    val latLng = LatLng(address.latitude, address.longitude)
+                    selectedLocation = latLng
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                } else {
+                    Toast.makeText(requireContext(), "Adresse introuvable", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Erreur de recherche", Toast.LENGTH_SHORT).show()
+            } finally {
+                isSearchingAddress = false
+            }
+        }
+    }
+
+    private fun handleOrderFightClick() {
+        val address = binding.etAddress.text.toString().trim()
+        val loc = selectedLocation
+        if (address.isEmpty() || loc == null) {
+            binding.tilAddress.error = "Sélectionnez un lieu"
+            return
+        }
+        setLoadingState(true)
+        val selectedId = binding.rgFightType.checkedRadioButtonId
+        val type = view?.findViewById<RadioButton>(selectedId)?.text.toString()
+
+        fightRepository.createFightRequest(address, loc.latitude, loc.longitude, type,
+            onSuccess = { fightId ->
+                setLoadingState(false)
+                currentFightId = fightId
+            },
+            onFailure = { 
+                setLoadingState(false)
+                Toast.makeText(requireContext(), "Erreur : ${it.message}", Toast.LENGTH_LONG).show()
+            }
+        )
+    }
+
+    private fun handleCancelFightClick() {
+        val id = currentFightId ?: return
+        setLoadingState(true)
+        fightRepository.cancelFight(id,
+            onSuccess = { setLoadingState(false) },
+            onFailure = {
+                setLoadingState(false)
+                Toast.makeText(requireContext(), "Erreur d\'annulation", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    private fun setLoadingState(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.btnOrderFight.isEnabled = !isLoading
+    }
+
+    private fun hideKeyboard(view: View) {
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    private fun checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) startLocationUpdates()
+        else locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     @SuppressLint("MissingPermission")
@@ -193,54 +308,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             priority = Priority.PRIORITY_HIGH_ACCURACY
         }
         fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
-    }
-
-    private fun getAddressFromCoordinates(latLng: LatLng) {
-        lifecycleScope.launch {
-            try {
-                val geocoder = Geocoder(requireContext(), Locale.getDefault())
-                val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-                binding.etAddress.setText(addresses?.firstOrNull()?.getAddressLine(0) ?: "Position sur la carte")
-            } catch (e: Exception) {
-                binding.etAddress.setText("Position sur la carte")
-            }
-        }
-    }
-
-    private fun setupListeners() {
-        binding.btnOrderFight.setOnClickListener { handleOrderFightClick() }
-        binding.fabLocateMe.setOnClickListener {
-            isFirstLocationUpdate = true
-            checkLocationPermission()
-        }
-    }
-
-    private fun handleOrderFightClick() {
-        val address = binding.etAddress.text.toString().trim()
-        val loc = selectedLocation
-        if (address.isEmpty() || loc == null) {
-            binding.tilAddress.error = "Sélectionnez un lieu"
-            return
-        }
-
-        setLoadingState(true)
-        val type = view?.findViewById<RadioButton>(binding.rgFightType.checkedRadioButtonId)?.text.toString()
-
-        fightRepository.createFightRequest(address, loc.latitude, loc.longitude, type,
-            onSuccess = {
-                setLoadingState(false)
-                Toast.makeText(requireContext(), "Duel envoyé !", Toast.LENGTH_LONG).show()
-            },
-            onFailure = {
-                setLoadingState(false)
-                Toast.makeText(requireContext(), "Erreur : ${it.message}", Toast.LENGTH_LONG).show()
-            }
-        )
-    }
-
-    private fun setLoadingState(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        binding.btnOrderFight.isEnabled = !isLoading
     }
 
     override fun onPause() {

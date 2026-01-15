@@ -2,6 +2,7 @@ package com.example.mobile_uber_fight.repositories
 
 import com.example.mobile_uber_fight.models.Fight
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
@@ -17,7 +18,7 @@ class FightRepository {
         lat: Double,
         lng: Double,
         fightType: String,
-        onSuccess: () -> Unit,
+        onSuccess: (String) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         val currentUser = auth.currentUser
@@ -26,15 +27,28 @@ class FightRepository {
             return
         }
 
-        val newFight = Fight(
-            requesterId = currentUser.uid,
-            status = "PENDING",
-            fightType = fightType,
-            location = GeoPoint(lat, lng),
-            address = address
+        // On utilise une Map pour pouvoir envoyer FieldValue.serverTimestamp()
+        // et ainsi satisfaire la règle de sécurité : request.resource.data.createdAt == request.time
+        val fightData = hashMapOf(
+            "requesterId" to currentUser.uid,
+            "status" to "PENDING",
+            "fightType" to fightType,
+            "location" to GeoPoint(lat, lng),
+            "address" to address,
+            "fighterId" to null,
+            "createdAt" to FieldValue.serverTimestamp()
         )
 
-        fightsCollection.add(newFight)
+        fightsCollection.add(fightData)
+            .addOnSuccessListener { documentReference ->
+                onSuccess(documentReference.id)
+            }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun cancelFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        fightsCollection.document(fightId)
+            .update("status", "CANCELLED")
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }

@@ -62,12 +62,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
+                    app:endIconMode="clear_text"
                     android:hint="@string/saisir_une_adresse">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etAddress"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:imeOptions="actionSearch"
+                        android:inputType="textPostalAddress" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -129,6 +132,15 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="16dp" />
+
+                <Button
+                    android:id="@+id/btnCancelSearch"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="16dp"
+                    android:text="ANNULER LA DEMANDE"
+                    android:textColor="@color/design_default_color_error" />
             </LinearLayout>
 
             <LinearLayout

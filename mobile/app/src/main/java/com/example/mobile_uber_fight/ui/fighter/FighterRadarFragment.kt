@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,8 +15,13 @@ import androidx.fragment.app.Fragment
 import com.example.mobile_uber_fight.databinding.FragmentFighterRadarBinding
 import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.repositories.FightRepository
+import com.example.mobile_uber_fight.repositories.UserRepository
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -31,9 +37,11 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     private val binding get() = _binding!!
 
     private val fightRepository = FightRepository()
+    private val userRepository = UserRepository()
     private lateinit var googleMap: GoogleMap
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
     
     private var isFirstLocationUpdate = true
 
@@ -41,7 +49,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            enableMyLocation()
+            startLocationUpdates()
         }
     }
 
@@ -58,6 +66,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        setupLocationCallback()
 
         val mapFragment = childFragmentManager.findFragmentById(binding.map.id) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -79,9 +88,6 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         checkLocationPermission()
         setupMapListeners()
         listenForPendingFights()
-        
-        // Center on user position immediately if possible
-        centerOnUserLocation()
     }
 
     private fun setupMapListeners() {
@@ -98,16 +104,18 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun centerOnUserLocation() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) 
-            == PackageManager.PERMISSION_GRANTED) {
-            
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null && isFirstLocationUpdate) {
-                    val userLatLng = LatLng(location.latitude, location.longitude)
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 14f))
-                    isFirstLocationUpdate = false
+    private fun setupLocationCallback() {
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult.lastLocation?.let { location ->
+                    // Mise à jour de la position du bagarreur dans Firestore
+                    userRepository.updateUserLocation(location.latitude, location.longitude)
+
+                    if (isFirstLocationUpdate) {
+                        val userLatLng = LatLng(location.latitude, location.longitude)
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 14f))
+                        isFirstLocationUpdate = false
+                    }
                 }
             }
         }
@@ -190,22 +198,34 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            enableMyLocation()
+            startLocationUpdates()
         } else {
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun enableMyLocation() {
+    private fun startLocationUpdates() {
         if (::googleMap.isInitialized) {
             googleMap.isMyLocationEnabled = true
-            centerOnUserLocation()
         }
+
+        val locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = Priority.PRIORITY_HIGH_ACCURACY
+        }
+
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
     }
 
     private fun setLoadingState(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+
+    override fun onPause() {
+        super.onPause()
+        fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     override fun onDestroyView() {
