@@ -5,6 +5,7 @@ import com.example.mobile_uber_fight.models.UserSettings
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -41,5 +42,17 @@ class AuthRepository {
 
     fun sendPasswordResetEmail(email: String): Task<Void> {
         return auth.sendPasswordResetEmail(email)
+    }
+
+    fun updatePassword(oldPass: String, newPass: String): Task<Void> {
+        val user = auth.currentUser ?: return Tasks.forException(Exception("Utilisateur non connecté"))
+        val email = user.email ?: return Tasks.forException(Exception("Email utilisateur introuvable"))
+
+        // Re-authenticate user before updating password
+        val credential = EmailAuthProvider.getCredential(email, oldPass)
+
+        return user.reauthenticate(credential).onSuccessTask {
+            user.updatePassword(newPass)
+        }
     }
 }
