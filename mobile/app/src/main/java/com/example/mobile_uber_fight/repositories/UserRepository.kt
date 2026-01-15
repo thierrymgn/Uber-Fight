@@ -1,6 +1,7 @@
 package com.example.mobile_uber_fight.repositories
 
 import android.util.Log
+import com.example.mobile_uber_fight.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
@@ -27,5 +28,21 @@ class UserRepository {
         } else {
             Log.w("UserRepository", "No authenticated user found.")
         }
+    }
+
+    fun listenToNearbyFighters(onFightersUpdate: (List<User>) -> Unit) {
+        db.collection("users")
+            .whereEqualTo("role", "FIGHTER")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w("UserRepository", "Listen failed.", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val fighters = snapshot.toObjects(User::class.java)
+                    onFightersUpdate(fighters)
+                }
+            }
     }
 }
