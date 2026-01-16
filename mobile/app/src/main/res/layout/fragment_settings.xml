@@ -151,7 +151,6 @@
                     android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Preferences Section -->
             <TextView
                 android:id="@+id/tvPreferencesHeader"
                 android:layout_width="wrap_content"
