@@ -103,7 +103,6 @@ class SettingsFragment : Fragment() {
     private fun logoutUser() {
         FirebaseAuth.getInstance().signOut()
         
-        // Clear activity stack and redirect to Authentication Activity
         val intent = Intent(requireContext(), AuthentificationActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

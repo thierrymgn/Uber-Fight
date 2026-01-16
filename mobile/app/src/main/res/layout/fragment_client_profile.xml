@@ -41,8 +41,6 @@
                     android:text="Statut: Client"
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
-                <!-- Add more profile info here if needed -->
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

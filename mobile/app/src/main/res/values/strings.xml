@@ -47,4 +47,7 @@
     <string name="mot_de_passe_oublie">Mot de passe oublié ?</string>
     <string name="un_email_de_reinitialisation_a_ete_envoye">Un email de réinitialisation a été envoyé.</string>
     <string name="veuillez_saisir_votre_email">Veuillez saisir votre email.</string>
+    <string name="ancien_mot_de_passe">Ancien mot de passe</string>
+    <string name="nouveau_mot_de_passe">Nouveau mot de passe</string>
+    <string name="confirmer_le_nouveau_mot_de_passe">Confirmer le nouveau mot de passe</string>
 </resources>
