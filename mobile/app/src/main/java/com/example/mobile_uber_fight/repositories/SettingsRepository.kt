@@ -19,7 +19,6 @@ class SettingsRepository {
             if (task.isSuccessful && task.result.exists()) {
                 task.result.toObject(UserSettings::class.java)
             } else {
-                // Return default settings if document doesn't exist yet
                 UserSettings()
             }
         }
@@ -32,13 +31,11 @@ class SettingsRepository {
 
     fun updateNotificationPreference(enabled: Boolean): Task<Void> {
         val uid = currentUserId ?: return com.google.android.gms.tasks.Tasks.forException(Exception("User not logged in"))
-        // Using set with merge instead of update so it creates the document if it doesn't exist
         return db.collection("userSettings").document(uid).set(mapOf("notificationsEnabled" to enabled), SetOptions.merge())
     }
 
     fun updateDarkModePreference(enabled: Boolean): Task<Void> {
         val uid = currentUserId ?: return com.google.android.gms.tasks.Tasks.forException(Exception("User not logged in"))
-        // Using set with merge instead of update so it creates the document if it doesn't exist
         return db.collection("userSettings").document(uid).set(mapOf("darkModeEnabled" to enabled), SetOptions.merge())
     }
 }

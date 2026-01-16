@@ -48,7 +48,6 @@ class AuthRepository {
         val user = auth.currentUser ?: return Tasks.forException(Exception("Utilisateur non connecté"))
         val email = user.email ?: return Tasks.forException(Exception("Email utilisateur introuvable"))
 
-        // Re-authenticate user before updating password
         val credential = EmailAuthProvider.getCredential(email, oldPass)
 
         return user.reauthenticate(credential).onSuccessTask {
