@@ -1,16 +1,10 @@
 'use client';
 
 import Card from "@/components/card";
+import { Utilisateur } from "@/types/utilisateur";
 
 export interface IInfoSectionProps {
-    utilisateurs: {
-        id: number;
-        nom: string;
-        prenom: string;
-        email: string;
-        role: string;
-        dateInscription: string;
-    }[];
+    utilisateurs: Utilisateur[];
 }
 
 export default function InfoSection({utilisateurs}: IInfoSectionProps) {

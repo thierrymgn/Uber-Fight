@@ -1,20 +1,83 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import InfoSection from "@/app/utilisateurs/components/info-section";
 import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
-import {collection, getDocs} from "@firebase/firestore";
+import { collection, getDocs } from "@firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/components/providers/auth-provider";
+import { Utilisateur } from "@/types/utilisateur";
 
+export default function UtilisateursPage() {
+    const { user, loading: authLoading } = useAuth();
+    const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-export default async function UtilisateursPage() {
+    useEffect(() => {
+        if (authLoading) return;
 
-    const snapshot = await getDocs(collection(db, "users"));
-    const users = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-    }));
-    console.log(users);
-    const utilisateurs = [
+        if (!user) {
+            setError("Vous devez être connecté pour voir cette page");
+            setLoading(false);
+            return;
+        }
+
+        const fetchUtilisateurs = async () => {
+            try {
+                setLoading(true);
+                const snapshot = await getDocs(collection(db, "users"));
+                const users = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as Utilisateur[];
+
+                setUtilisateurs(users);
+                setError(null);
+            } catch (err) {
+                console.error("Erreur lors de la récupération des utilisateurs:", err);
+                const errorMessage = err instanceof Error ? err.message : "Erreur lors de la récupération des utilisateurs";
+                setError(errorMessage);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUtilisateurs();
+    }, [user, authLoading]);
+    console.log(utilisateurs)
+    if (authLoading || loading) {
+        return (
+            <div className="p-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                            <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement des utilisateurs...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded">
+                        <p className="font-bold">Erreur</p>
+                        <p>{error}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Données de démonstration si la collection est vide
+    const utilisateursDemo: Utilisateur[] = [
         {
-            id: 1,
+            id: "demo-1",
             nom: "Dupont",
             prenom: "Jean",
             email: "jean.dupont@example.com",
@@ -22,7 +85,7 @@ export default async function UtilisateursPage() {
             dateInscription: "2024-01-15"
         },
         {
-            id: 2,
+            id: "demo-2",
             nom: "Martin",
             prenom: "Sophie",
             email: "sophie.martin@example.com",
@@ -30,7 +93,7 @@ export default async function UtilisateursPage() {
             dateInscription: "2024-02-20"
         },
         {
-            id: 3,
+            id: "demo-3",
             nom: "Bernard",
             prenom: "Pierre",
             email: "pierre.bernard@example.com",
@@ -38,7 +101,7 @@ export default async function UtilisateursPage() {
             dateInscription: "2024-03-10"
         },
         {
-            id: 4,
+            id: "demo-4",
             nom: "Dubois",
             prenom: "Marie",
             email: "marie.dubois@example.com",
@@ -46,7 +109,7 @@ export default async function UtilisateursPage() {
             dateInscription: "2024-04-05"
         },
         {
-            id: 5,
+            id: "demo-5",
             nom: "Leroy",
             prenom: "Thomas",
             email: "thomas.leroy@example.com",
@@ -54,6 +117,9 @@ export default async function UtilisateursPage() {
             dateInscription: "2024-05-12"
         }
     ];
+
+    // Utiliser les données réelles de Firestore si disponibles, sinon les données de démo
+    const displayUtilisateurs = utilisateurs.length > 0 ? utilisateurs : utilisateursDemo;
 
     return (
         <div className="p-8">
@@ -64,10 +130,11 @@ export default async function UtilisateursPage() {
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400">
                         Liste complète de tous les utilisateurs inscrits
+                        {utilisateurs.length === 0 && " (données de démonstration)"}
                     </p>
                 </div>
 
-                <InfoSection utilisateurs={utilisateurs}/>
+                <InfoSection utilisateurs={displayUtilisateurs}/>
 
                 {/* Tableau des utilisateurs */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
@@ -99,7 +166,7 @@ export default async function UtilisateursPage() {
                             </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {utilisateurs.map((utilisateur) => (
+                            {displayUtilisateurs.map((utilisateur) => (
                                 <tr
                                     key={utilisateur.id}
                                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
