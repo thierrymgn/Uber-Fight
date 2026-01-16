@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.ActivityAuthentificationBinding
 import com.example.mobile_uber_fight.utils.RoleManager
 import com.google.firebase.auth.FirebaseAuth
@@ -27,6 +28,10 @@ class AuthentificationActivity : AppCompatActivity() {
 
         binding.btnLogin.setOnClickListener {
             loginUser()
+        }
+
+        binding.tvForgotPassword.setOnClickListener {
+            resetPassword()
         }
     }
 
@@ -64,6 +69,24 @@ class AuthentificationActivity : AppCompatActivity() {
                         Toast.makeText(this, "Impossible de vérifier le rôle: ${exception.message}", Toast.LENGTH_LONG).show()
                     }
                 )
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun resetPassword() {
+        val email = binding.textInputLayoutEmail.editText?.text.toString().trim()
+        
+        if (email.isEmpty()) {
+            binding.textInputLayoutEmail.error = getString(R.string.veuillez_saisir_votre_email)
+            return
+        }
+        binding.textInputLayoutEmail.error = null
+
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener {
+                Toast.makeText(this, getString(R.string.un_email_de_reinitialisation_a_ete_envoye), Toast.LENGTH_LONG).show()
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()

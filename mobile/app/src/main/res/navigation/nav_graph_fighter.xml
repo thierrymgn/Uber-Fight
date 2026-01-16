@@ -19,5 +19,14 @@
         android:id="@+id/fighterProfileFragment"
         android:name="com.example.mobile_uber_fight.ui.fighter.FighterProfileFragment"
         android:label="fragment_fighter_profile"
-        tools:layout="@layout/fragment_fighter_profile" />
+        tools:layout="@layout/fragment_fighter_profile">
+        <action
+            android:id="@+id/action_fighterProfileFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.mobile_uber_fight.ui.settings.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" />
 </navigation>
