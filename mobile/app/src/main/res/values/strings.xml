@@ -28,7 +28,6 @@
     <string name="type_de_mission">Type de mission</string>
     <string name="action_placeholder">Action (Placeholder)</string>
 
-    <!-- Settings Strings -->
     <string name="parametres">Paramètres</string>
     <string name="compte">Compte</string>
     <string name="modifier_le_profil">Modifier le profil</string>
