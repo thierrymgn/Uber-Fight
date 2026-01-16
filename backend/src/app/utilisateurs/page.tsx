@@ -45,7 +45,7 @@ export default function UtilisateursPage() {
 
         fetchUtilisateurs();
     }, [user, authLoading]);
-    console.log(utilisateurs)
+    
     if (authLoading || loading) {
         return (
             <div className="p-8">
@@ -74,53 +74,6 @@ export default function UtilisateursPage() {
         );
     }
 
-    // Données de démonstration si la collection est vide
-    const utilisateursDemo: Utilisateur[] = [
-        {
-            id: "demo-1",
-            nom: "Dupont",
-            prenom: "Jean",
-            email: "jean.dupont@example.com",
-            role: "Administrateur",
-            dateInscription: "2024-01-15"
-        },
-        {
-            id: "demo-2",
-            nom: "Martin",
-            prenom: "Sophie",
-            email: "sophie.martin@example.com",
-            role: "Utilisateur",
-            dateInscription: "2024-02-20"
-        },
-        {
-            id: "demo-3",
-            nom: "Bernard",
-            prenom: "Pierre",
-            email: "pierre.bernard@example.com",
-            role: "Bagarreur",
-            dateInscription: "2024-03-10"
-        },
-        {
-            id: "demo-4",
-            nom: "Dubois",
-            prenom: "Marie",
-            email: "marie.dubois@example.com",
-            role: "Utilisateur",
-            dateInscription: "2024-04-05"
-        },
-        {
-            id: "demo-5",
-            nom: "Leroy",
-            prenom: "Thomas",
-            email: "thomas.leroy@example.com",
-            role: "Utilisateur",
-            dateInscription: "2024-05-12"
-        }
-    ];
-
-    // Utiliser les données réelles de Firestore si disponibles, sinon les données de démo
-    const displayUtilisateurs = utilisateurs.length > 0 ? utilisateurs : utilisateursDemo;
-
     return (
         <div className="p-8">
             <div className="max-w-7xl mx-auto">
@@ -134,7 +87,7 @@ export default function UtilisateursPage() {
                     </p>
                 </div>
 
-                <InfoSection utilisateurs={displayUtilisateurs}/>
+                <InfoSection utilisateurs={utilisateurs}/>
 
                 {/* Tableau des utilisateurs */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
@@ -143,13 +96,7 @@ export default function UtilisateursPage() {
                             <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    ID
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Nom
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Prénom
+                                    username
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                     Email
@@ -166,19 +113,13 @@ export default function UtilisateursPage() {
                             </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            {displayUtilisateurs.map((utilisateur) => (
+                            {utilisateurs.map((utilisateur) => (
                                 <tr
                                     key={utilisateur.id}
                                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {utilisateur.id}
-                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {utilisateur.nom}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        {utilisateur.prenom}
+                                        {utilisateur.username}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                                         {utilisateur.email}
@@ -187,7 +128,11 @@ export default function UtilisateursPage() {
                                         <UserRoleTag role={utilisateur.role}/>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                                        {new Date(utilisateur.dateInscription).toLocaleDateString('fr-FR')}
+                                        {new Date(utilisateur.createdAt).toLocaleDateString("fr-FR", {
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                        })}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                                         <button

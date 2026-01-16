@@ -2,10 +2,9 @@
 
 export interface Utilisateur {
     id: string;
-    nom: string;
-    prenom: string;
+    username: string;
     email: string;
     role: string;
-    dateInscription: string;
+    createdAt: string;
 }
 
