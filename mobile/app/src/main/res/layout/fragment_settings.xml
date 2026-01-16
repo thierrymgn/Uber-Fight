@@ -237,7 +237,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Legal Section -->
             <TextView
                 android:id="@+id/tvLegalHeader"
                 android:layout_width="wrap_content"
