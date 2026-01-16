@@ -1,4 +1,10 @@
+"use client";
+
+import { useAuth } from "@/components/providers/auth-provider";
+
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="font-sans min-h-screen p-8 pb-20">
       <div className="max-w-4xl mx-auto">
@@ -6,6 +12,11 @@ export default function Home() {
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white text-center">
             Bienvenue sur Uber Fight
           </h1>
+          {user && (
+            <p className="text-lg text-blue-600 dark:text-blue-400 text-center">
+              Connecté en tant que : <span className="font-semibold">{user.email}</span>
+            </p>
+          )}
           <p className="text-lg text-gray-600 dark:text-gray-400 text-center max-w-2xl">
             Application de gestion Uber Fight. Utilisez la sidebar pour naviguer entre les différentes sections.
           </p>

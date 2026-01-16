@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "uber-fight"
-  }
+    "default": "uber-fight",
+    "friendlyeats-codelab": "uber-fight"
+  },
+  "targets": {},
+  "etags": {}
 }
