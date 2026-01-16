@@ -116,7 +116,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Payment Section -->
             <TextView
                 android:id="@+id/tvPaymentHeader"
                 android:layout_width="wrap_content"
