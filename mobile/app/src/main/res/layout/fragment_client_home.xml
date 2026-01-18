@@ -65,12 +65,15 @@
                     app:endIconMode="clear_text"
                     android:hint="@string/saisir_une_adresse">
 
-                    <com.google.android.material.textfield.TextInputEditText
+                    <androidx.appcompat.widget.AppCompatAutoCompleteTextView
                         android:id="@+id/etAddress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:padding="16dp"
                         android:imeOptions="actionSearch"
-                        android:inputType="textPostalAddress" />
+                        android:inputType="textPostalAddress"
+                        android:maxLines="1" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 

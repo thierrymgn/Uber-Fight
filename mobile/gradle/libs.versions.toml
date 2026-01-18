@@ -11,6 +11,7 @@ activity = "1.12.2"
 constraintlayout = "2.2.1"
 firebaseAuth = "24.0.1"
 navigationFragmentKtx = "2.9.6"
+places = "5.1.1"
 playServicesMaps = "19.2.0"
 secretsGradlePlugin = "2.0.1"
 playServicesLocation = "21.3.0"
@@ -27,6 +28,7 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
+places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
 secrets-gradle-plugin = { module = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }

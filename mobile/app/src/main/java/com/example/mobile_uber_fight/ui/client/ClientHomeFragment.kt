@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.mobile_uber_fight.R
+import com.example.mobile_uber_fight.adapter.PlacesAdapter
 import com.example.mobile_uber_fight.databinding.FragmentClientHomeBinding
 import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.models.User
@@ -42,6 +43,10 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +54,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 import androidx.core.graphics.createBitmap
+import com.example.mobile_uber_fight.BuildConfig
 
 class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
@@ -70,6 +76,9 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private lateinit var locationCallback: LocationCallback
     private var isFirstLocationUpdate = true
 
+    private lateinit var placesClient: PlacesClient
+    private lateinit var placesAdapter: PlacesAdapter
+
     companion object {
         private const val TAG = "ClientHomeFragment"
         private const val RADIUS_IN_METERS = 4000.0
@@ -89,6 +98,9 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        initPlaces()
+        
         val mapFragment = childFragmentManager.findFragmentById(binding.map.id) as SupportMapFragment
         mapFragment.getMapAsync(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
@@ -96,6 +108,15 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         setupBottomSheet()
         setupListeners()
         listenToCurrentRequest()
+    }
+
+    private fun initPlaces() {
+        if (!Places.isInitialized()) {
+            Places.initialize(requireContext(), BuildConfig.MAPS_API_KEY)
+        }
+        placesClient = Places.createClient(requireContext())
+        placesAdapter = PlacesAdapter(requireContext(), placesClient)
+        binding.etAddress.setAdapter(placesAdapter)
     }
 
     private fun listenToCurrentRequest() {
@@ -217,12 +238,48 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             checkLocationPermission()
         }
 
+        binding.etAddress.setOnItemClickListener { _, _, position, _ ->
+            val placeId = placesAdapter.getPlaceId(position)
+            fetchPlaceDetails(placeId)
+        }
+
         binding.etAddress.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
                 searchAddress(v.text.toString())
                 hideKeyboard(v)
                 true
             } else false
+        }
+    }
+
+    private fun fetchPlaceDetails(placeId: String) {
+        val fields = listOf(
+            Place.Field.ID,
+            Place.Field.DISPLAY_NAME,
+            Place.Field.LOCATION,
+            Place.Field.FORMATTED_ADDRESS
+        )
+
+        val request = FetchPlaceRequest.newInstance(placeId, fields)
+
+        isSearchingAddress = true
+        placesClient.fetchPlace(request).addOnSuccessListener { response ->
+            val place = response.place
+
+            place.location?.let { latLng ->
+                selectedLocation = latLng
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+            }
+
+            place.formattedAddress?.let { fullAddress ->
+                binding.etAddress.setText(fullAddress)
+            }
+
+            hideKeyboard(binding.etAddress)
+            isSearchingAddress = false
+        }.addOnFailureListener {
+            isSearchingAddress = false
+            Toast.makeText(requireContext(), "Erreur lors de la récupération du lieu", Toast.LENGTH_SHORT).show()
         }
     }
 
