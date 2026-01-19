@@ -162,11 +162,12 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun updateFighterMarker(latLng: LatLng) {
+        val fighterIcon = bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)
         if (fighterMarker == null) {
             fighterMarker = googleMap.addMarker(MarkerOptions()
                 .position(latLng)
                 .title("Bagarreur")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+                .icon(fighterIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
         } else {
             fighterMarker?.position = latLng
         }
@@ -224,7 +225,11 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
+        
+        googleMap.uiSettings.isZoomControlsEnabled = true
         googleMap.uiSettings.isMyLocationButtonEnabled = false
+        val paddingBottom = (100 * resources.displayMetrics.density).toInt()
+        googleMap.setPadding(0, 0, 0, paddingBottom)
 
         googleMap.setOnCameraIdleListener {
             if (!isSearchingAddress) {
@@ -280,7 +285,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                     userRepository.updateUserLocation(location.latitude, location.longitude)
                     if (fightersList.isNotEmpty()) displayFightersOnMap()
                     if (isFirstLocationUpdate) {
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15f))
+                        val currentLatLng = LatLng(location.latitude, location.longitude)
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
                         isFirstLocationUpdate = false
                     }
                 }

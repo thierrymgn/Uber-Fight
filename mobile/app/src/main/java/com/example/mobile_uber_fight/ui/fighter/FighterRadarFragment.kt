@@ -2,7 +2,11 @@ package com.example.mobile_uber_fight.ui.fighter
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Looper
 import android.view.LayoutInflater
@@ -12,10 +16,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.FragmentFighterRadarBinding
 import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.repositories.FightRepository
 import com.example.mobile_uber_fight.repositories.UserRepository
+import com.example.mobile_uber_fight.utils.DirectionsService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -26,10 +33,10 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import kotlinx.coroutines.launch
+import androidx.core.graphics.createBitmap
 
 class FighterRadarFragment : Fragment(), OnMapReadyCallback {
 
@@ -44,6 +51,8 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     private lateinit var locationCallback: LocationCallback
     
     private var isFirstLocationUpdate = true
+    private var currentActiveFight: Fight? = null
+    private var polyline: Polyline? = null
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -72,6 +81,19 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
 
         setupBottomSheet()
+        listenToMyActiveFight()
+    }
+
+    private fun listenToMyActiveFight() {
+        fightRepository.listenToMyActiveFight(
+            onFightFound = { fight ->
+                currentActiveFight = fight
+                if (::googleMap.isInitialized) {
+                    drawRouteToFight()
+                }
+            },
+            onFailure = { /* Handle error */ }
+        )
     }
 
     private fun setupBottomSheet() {
@@ -85,9 +107,42 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         googleMap.uiSettings.isZoomControlsEnabled = true
         googleMap.uiSettings.isMyLocationButtonEnabled = true
         
+        val paddingBottom = (100 * resources.displayMetrics.density).toInt()
+        googleMap.setPadding(0, 0, 0, paddingBottom)
+        
         checkLocationPermission()
         setupMapListeners()
         listenForPendingFights()
+        drawRouteToFight()
+    }
+
+    private fun drawRouteToFight() {
+        val fight = currentActiveFight ?: return
+        val fightLoc = fight.location ?: return
+        
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            location?.let {
+                val origin = LatLng(it.latitude, it.longitude)
+                val destination = LatLng(fightLoc.latitude, fightLoc.longitude)
+                
+                lifecycleScope.launch {
+                    val points = DirectionsService.getDirections(origin, destination)
+                    if (points != null && isAdded) {
+                        polyline?.remove()
+                        polyline = googleMap.addPolyline(PolylineOptions()
+                            .addAll(points)
+                            .color(Color.BLUE)
+                            .width(10f))
+                        
+                        val bounds = LatLngBounds.Builder()
+                            .include(origin)
+                            .include(destination)
+                            .build()
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+                    }
+                }
+            }
+        }
     }
 
     private fun setupMapListeners() {
@@ -108,7 +163,6 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    // Mise à jour de la position du bagarreur dans Firestore
                     userRepository.updateUserLocation(location.latitude, location.longitude)
 
                     if (isFirstLocationUpdate) {
@@ -151,6 +205,8 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun updateMapMarkers(fights: List<Fight>) {
+        if (currentActiveFight != null) return
+        
         googleMap.clear()
         
         if (fights.isEmpty()) {
@@ -221,6 +277,17 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
 
     private fun setLoadingState(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+
+    private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
+        return try {
+            ContextCompat.getDrawable(context, vectorResId)?.run {
+                setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+                val bitmap = createBitmap(intrinsicWidth, intrinsicHeight)
+                draw(Canvas(bitmap))
+                BitmapDescriptorFactory.fromBitmap(bitmap)
+            }
+        } catch (e: Exception) { null }
     }
 
     override fun onPause() {
