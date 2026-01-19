@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
@@ -29,6 +30,7 @@ import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.models.User
 import com.example.mobile_uber_fight.repositories.FightRepository
 import com.example.mobile_uber_fight.repositories.UserRepository
+import com.example.mobile_uber_fight.utils.DirectionsService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -39,16 +41,14 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -78,6 +78,10 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var placesClient: PlacesClient
     private lateinit var placesAdapter: PlacesAdapter
+
+    private var fighterLocationListener: ListenerRegistration? = null
+    private var fighterMarker: Marker? = null
+    private var polyline: Polyline? = null
 
     companion object {
         private const val TAG = "ClientHomeFragment"
@@ -123,6 +127,67 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         fightRepository.listenToCurrentRequest(userId) { fight ->
             currentFightId = fight?.id
             updateUIBasedOnFightStatus(fight)
+            
+            if (fight?.status == "ACCEPTED" || fight?.status == "IN_PROGRESS") {
+                fight.fighterId?.let { startTrackingFighter(it, fight) }
+            } else {
+                stopTrackingFighter()
+            }
+        }
+    }
+
+    private fun startTrackingFighter(fighterId: String, fight: Fight) {
+        if (fighterLocationListener != null) return
+
+        fighterLocationListener = userRepository.listenToUserLocation(fighterId) { geoPoint ->
+            geoPoint?.let { gp ->
+                val fighterLatLng = LatLng(gp.latitude, gp.longitude)
+                updateFighterMarker(fighterLatLng)
+                
+                fight.location?.let { fightGP ->
+                    val fightLatLng = LatLng(fightGP.latitude, fightGP.longitude)
+                    drawRoute(fighterLatLng, fightLatLng)
+                }
+            }
+        }
+    }
+
+    private fun stopTrackingFighter() {
+        fighterLocationListener?.remove()
+        fighterLocationListener = null
+        fighterMarker?.remove()
+        fighterMarker = null
+        polyline?.remove()
+        polyline = null
+    }
+
+    private fun updateFighterMarker(latLng: LatLng) {
+        if (fighterMarker == null) {
+            fighterMarker = googleMap.addMarker(MarkerOptions()
+                .position(latLng)
+                .title("Bagarreur")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        } else {
+            fighterMarker?.position = latLng
+        }
+    }
+
+    private fun drawRoute(origin: LatLng, destination: LatLng) {
+        lifecycleScope.launch {
+            val points = DirectionsService.getDirections(origin, destination)
+            if (points != null && isAdded) {
+                polyline?.remove()
+                polyline = googleMap.addPolyline(PolylineOptions()
+                    .addAll(points)
+                    .color(Color.BLUE)
+                    .width(10f))
+                
+                val bounds = LatLngBounds.Builder()
+                    .include(origin)
+                    .include(destination)
+                    .build()
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+            }
         }
     }
 
@@ -179,16 +244,19 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun displayFightersOnMap() {
         if (!::googleMap.isInitialized) return
         val myLocation = currentUserLocation ?: return
-        googleMap.clear()
-        fightersList.forEach { fighter ->
-            val fighterLoc = fighter.location ?: return@forEach
-            val results = FloatArray(1)
-            Location.distanceBetween(myLocation.latitude, myLocation.longitude, fighterLoc.latitude, fighterLoc.longitude, results)
-            if (results[0] <= RADIUS_IN_METERS) {
-                googleMap.addMarker(MarkerOptions()
-                    .position(LatLng(fighterLoc.latitude, fighterLoc.longitude))
-                    .title("${fighter.username} ⭐ ${fighter.rating}")
-                    .icon(bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)))
+        
+        if (fighterLocationListener == null) {
+            googleMap.clear()
+            fightersList.forEach { fighter ->
+                val fighterLoc = fighter.location ?: return@forEach
+                val results = FloatArray(1)
+                Location.distanceBetween(myLocation.latitude, myLocation.longitude, fighterLoc.latitude, fighterLoc.longitude, results)
+                if (results[0] <= RADIUS_IN_METERS) {
+                    googleMap.addMarker(MarkerOptions()
+                        .position(LatLng(fighterLoc.latitude, fighterLoc.longitude))
+                        .title("${fighter.username} ⭐ ${fighter.rating}")
+                        .icon(bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)))
+                }
             }
         }
     }
@@ -253,29 +321,17 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun fetchPlaceDetails(placeId: String) {
-        val fields = listOf(
-            Place.Field.ID,
-            Place.Field.DISPLAY_NAME,
-            Place.Field.LOCATION,
-            Place.Field.FORMATTED_ADDRESS
-        )
-
+        val fields = listOf(Place.Field.ID, Place.Field.DISPLAY_NAME, Place.Field.LOCATION, Place.Field.FORMATTED_ADDRESS)
         val request = FetchPlaceRequest.newInstance(placeId, fields)
 
         isSearchingAddress = true
         placesClient.fetchPlace(request).addOnSuccessListener { response ->
             val place = response.place
-
             place.location?.let { latLng ->
                 selectedLocation = latLng
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                hideKeyboard(binding.etAddress)
             }
-
-            place.formattedAddress?.let { fullAddress ->
-                binding.etAddress.setText(fullAddress)
-            }
-
-            hideKeyboard(binding.etAddress)
             isSearchingAddress = false
         }.addOnFailureListener {
             isSearchingAddress = false
@@ -370,6 +426,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     override fun onPause() {
         super.onPause()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+        stopTrackingFighter()
     }
 
     override fun onDestroyView() {

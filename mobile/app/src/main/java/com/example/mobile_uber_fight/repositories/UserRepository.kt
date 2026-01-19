@@ -5,6 +5,7 @@ import com.example.mobile_uber_fight.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.ListenerRegistration
 
 class UserRepository {
 
@@ -43,6 +44,19 @@ class UserRepository {
                     val fighters = snapshot.toObjects(User::class.java)
                     onFightersUpdate(fighters)
                 }
+            }
+    }
+
+    fun listenToUserLocation(userId: String, onUpdate: (GeoPoint?) -> Unit): ListenerRegistration {
+        return db.collection("users").document(userId)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w("UserRepository", "Listen to user location failed.", e)
+                    return@addSnapshotListener
+                }
+                
+                val location = snapshot?.getGeoPoint("location")
+                onUpdate(location)
             }
     }
 }
