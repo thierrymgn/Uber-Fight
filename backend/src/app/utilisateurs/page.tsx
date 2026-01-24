@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import InfoSection from "@/app/utilisateurs/components/info-section";
-import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
 import { collection, getDocs } from "@firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -46,6 +45,12 @@ export default function UtilisateursPage() {
 
         fetchUtilisateurs();
     }, [user, authLoading]);
+
+    const handleUserDeleted = (userId: string) => {
+        setUtilisateurs(prevUtilisateurs =>
+            prevUtilisateurs.filter(u => u.id !== userId)
+        );
+    };
 
     if (authLoading || loading) {
         return (
@@ -91,7 +96,8 @@ export default function UtilisateursPage() {
                 <InfoSection utilisateurs={utilisateurs}/>
 
                 <UsersTable
-                    utilisateurs={ utilisateurs}
+                    utilisateurs={utilisateurs}
+                    onUserDeleted={handleUserDeleted}
                 />
             </div>
         </div>
