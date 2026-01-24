@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Utilisateur } from "@/types/utilisateur";
 import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
 import DeleteConfirmationModal from "@/components/delete-confirmation-modal";
@@ -13,9 +14,14 @@ export interface UsersTableProps {
 }
 
 export default function UsersTable({ utilisateurs, onUserDeleted }: UsersTableProps) {
+    const router = useRouter();
     const [userToDelete, setUserToDelete] = useState<Utilisateur | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    const handleEdit = (userId: string) => {
+        router.push(`/utilisateurs/${userId}`);
+    };
 
     const handleDeleteClick = (utilisateur: Utilisateur) => {
         setUserToDelete(utilisateur);
@@ -102,6 +108,7 @@ export default function UsersTable({ utilisateurs, onUserDeleted }: UsersTablePr
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                                 <button
+                                    onClick={() => handleEdit(utilisateur.id)}
                                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
                                     Modifier
                                 </button>
