@@ -9,10 +9,16 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 
+data class RouteInfo(
+    val polyline: List<LatLng>,
+    val duration: String,
+    val distance: String
+)
+
 object DirectionsService {
     private val client = OkHttpClient()
 
-    suspend fun getDirections(origin: LatLng, destination: LatLng): List<LatLng>? = withContext(Dispatchers.IO) {
+    suspend fun getDirections(origin: LatLng, destination: LatLng): RouteInfo? = withContext(Dispatchers.IO) {
         val url = "https://maps.googleapis.com/maps/api/directions/json?" +
                 "origin=${origin.latitude},${origin.longitude}&" +
                 "destination=${destination.latitude},${destination.longitude}&" +
@@ -35,11 +41,18 @@ object DirectionsService {
                 val routes = jsonObject.getJSONArray("routes")
                 if (routes.length() == 0) return@withContext null
                 
-                val polyline = routes.getJSONObject(0)
-                    .getJSONObject("overview_polyline")
-                    .getString("points")
+                val route = routes.getJSONObject(0)
+                val legs = route.getJSONArray("legs")
+                if (legs.length() == 0) return@withContext null
                 
-                return@withContext decodePolyline(polyline)
+                val leg = legs.getJSONObject(0)
+                val duration = leg.getJSONObject("duration").getString("text")
+                val distance = leg.getJSONObject("distance").getString("text")
+                
+                val encodedPolyline = route.getJSONObject("overview_polyline").getString("points")
+                val points = decodePolyline(encodedPolyline)
+                
+                return@withContext RouteInfo(points, duration, distance)
             }
         } catch (e: Exception) {
             Log.e("DirectionsService", "Network Error", e)
@@ -47,9 +60,6 @@ object DirectionsService {
         }
     }
 
-    /**
-     * Decode an encoded polyline string into a list of LatLng
-     */
     private fun decodePolyline(encoded: String): List<LatLng> {
         val poly = ArrayList<LatLng>()
         var index = 0

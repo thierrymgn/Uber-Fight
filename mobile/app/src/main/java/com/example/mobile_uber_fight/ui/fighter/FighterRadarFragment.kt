@@ -91,6 +91,10 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 if (::googleMap.isInitialized) {
                     drawRouteToFight()
                 }
+                
+                if (fight == null) {
+                    binding.cvTripInfo.visibility = View.GONE
+                }
             },
             onFailure = { /* Handle error */ }
         )
@@ -126,13 +130,16 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 val destination = LatLng(fightLoc.latitude, fightLoc.longitude)
                 
                 lifecycleScope.launch {
-                    val points = DirectionsService.getDirections(origin, destination)
-                    if (points != null && isAdded) {
+                    val route = DirectionsService.getDirections(origin, destination)
+                    if (route != null && isAdded) {
                         polyline?.remove()
                         polyline = googleMap.addPolyline(PolylineOptions()
-                            .addAll(points)
+                            .addAll(route.polyline)
                             .color(Color.BLUE)
                             .width(10f))
+                        
+                        binding.tvTripInfo.text = "${route.duration} • ${route.distance}"
+                        binding.cvTripInfo.visibility = View.VISIBLE
                         
                         val bounds = LatLngBounds.Builder()
                             .include(origin)
@@ -164,6 +171,10 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
                     userRepository.updateUserLocation(location.latitude, location.longitude)
+                    
+                    if (currentActiveFight != null) {
+                        drawRouteToFight()
+                    }
 
                     if (isFirstLocationUpdate) {
                         val userLatLng = LatLng(location.latitude, location.longitude)

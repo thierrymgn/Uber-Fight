@@ -159,6 +159,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         fighterMarker = null
         polyline?.remove()
         polyline = null
+        binding.cvEta.visibility = View.GONE
     }
 
     private fun updateFighterMarker(latLng: LatLng) {
@@ -175,14 +176,17 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private fun drawRoute(origin: LatLng, destination: LatLng) {
         lifecycleScope.launch {
-            val points = DirectionsService.getDirections(origin, destination)
-            if (points != null && isAdded) {
+            val route = DirectionsService.getDirections(origin, destination)
+            if (route != null && isAdded) {
                 polyline?.remove()
                 polyline = googleMap.addPolyline(PolylineOptions()
-                    .addAll(points)
+                    .addAll(route.polyline)
                     .color(Color.BLUE)
                     .width(10f))
                 
+                binding.tvEta.text = "Arrivée dans ${route.duration} (${route.distance})"
+                binding.cvEta.visibility = View.VISIBLE
+
                 val bounds = LatLngBounds.Builder()
                     .include(origin)
                     .include(destination)
