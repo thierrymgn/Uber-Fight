@@ -89,13 +89,22 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
             onFightFound = { fight ->
                 if (_binding == null) return@listenToMyActiveFight
                 
+                val wasInMission = currentActiveFight != null
                 currentActiveFight = fight
-                if (::googleMap.isInitialized) {
-                    drawRouteToFight()
-                }
                 
-                if (fight == null) {
+                if (fight != null) {
+                    binding?.tvEmpty?.visibility = View.GONE
+                    if (::googleMap.isInitialized) {
+                        drawRouteToFight()
+                    }
+                } else {
                     binding?.cvTripInfo?.visibility = View.GONE
+                    polyline?.remove()
+                    polyline = null
+                    
+                    if (wasInMission && ::googleMap.isInitialized) {
+                        googleMap.clear()
+                    }
                 }
             },
             onFailure = { /* Handle error */ }
@@ -127,7 +136,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         val fightLoc = fight.location ?: return
         
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            if (_binding == null) return@addOnSuccessListener
+            if (_binding == null || currentActiveFight == null) return@addOnSuccessListener
             
             location?.let {
                 val origin = LatLng(it.latitude, it.longitude)
@@ -135,7 +144,8 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 
                 lifecycleScope.launch {
                     val route = DirectionsService.getDirections(origin, destination)
-                    if (route != null && isAdded && _binding != null) {
+                    // Double vérification : le combat est-il toujours actif après l'appel réseau ?
+                    if (route != null && isAdded && _binding != null && currentActiveFight != null) {
                         polyline?.remove()
                         polyline = googleMap.addPolyline(PolylineOptions()
                             .addAll(route.polyline)
@@ -223,7 +233,6 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
 
     private fun updateMapMarkers(fights: List<Fight>) {
         if (currentActiveFight != null) {
-            googleMap.clear()
             binding?.tvEmpty?.visibility = View.GONE
             return
         }

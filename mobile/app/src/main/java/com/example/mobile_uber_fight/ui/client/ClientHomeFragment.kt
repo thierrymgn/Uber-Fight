@@ -143,6 +143,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun startTrackingFighter(fighterId: String, fight: Fight) {
         if (fighterLocationListener != null) return
 
+        googleMap.clear()
+
         fighterLocationListener = userRepository.listenToUserLocation(fighterId) { geoPoint ->
             if (_binding == null) return@listenToUserLocation
             geoPoint?.let { gp ->
@@ -165,6 +167,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         polyline?.remove()
         polyline = null
         binding?.cvEta?.visibility = View.GONE
+        
+        displayFightersOnMap()
     }
 
     private fun updateFighterMarker(latLng: LatLng) {
@@ -262,18 +266,20 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         if (!::googleMap.isInitialized || _binding == null) return
         val myLocation = currentUserLocation ?: return
         
-        if (fighterLocationListener == null) {
-            googleMap.clear()
-            fightersList.forEach { fighter ->
-                val fighterLoc = fighter.location ?: return@forEach
-                val results = FloatArray(1)
-                Location.distanceBetween(myLocation.latitude, myLocation.longitude, fighterLoc.latitude, fighterLoc.longitude, results)
-                if (results[0] <= RADIUS_IN_METERS) {
-                    googleMap.addMarker(MarkerOptions()
-                        .position(LatLng(fighterLoc.latitude, fighterLoc.longitude))
-                        .title("${fighter.username} ⭐ ${fighter.rating}")
-                        .icon(bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)))
-                }
+        if (fighterLocationListener != null) {
+            return 
+        }
+        
+        googleMap.clear()
+        fightersList.forEach { fighter ->
+            val fighterLoc = fighter.location ?: return@forEach
+            val results = FloatArray(1)
+            Location.distanceBetween(myLocation.latitude, myLocation.longitude, fighterLoc.latitude, fighterLoc.longitude, results)
+            if (results[0] <= RADIUS_IN_METERS) {
+                googleMap.addMarker(MarkerOptions()
+                    .position(LatLng(fighterLoc.latitude, fighterLoc.longitude))
+                    .title("${fighter.username} ⭐ ${fighter.rating}")
+                    .icon(bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)))
             }
         }
     }
@@ -296,7 +302,11 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 locationResult.lastLocation?.let { location ->
                     currentUserLocation = location
                     userRepository.updateUserLocation(location.latitude, location.longitude)
-                    if (fightersList.isNotEmpty()) displayFightersOnMap()
+                    
+                    if (fighterLocationListener == null && fightersList.isNotEmpty()) {
+                        displayFightersOnMap()
+                    }
+                    
                     if (isFirstLocationUpdate) {
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15f))
                         isFirstLocationUpdate = false
