@@ -34,12 +34,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
+        let unsubscribe: (() => void) | undefined;
+        try {
+            unsubscribe = onAuthStateChanged(
+                auth,
+                (user) => {
+                    setUser(user);
+                    setLoading(false);
+                },
+                (error) => {
+                    console.error("Error observing auth state:", error);
+                    setUser(null);
+                    setLoading(false);
+                }
+            );
+        } catch (error) {
+            console.error("Failed to set up auth state listener:", error);
+            setUser(null);
             setLoading(false);
-        });
-
-        return unsubscribe;
+        }
+        return unsubscribe ?? (() => {});
     }, []);
 
     const login = async (email: string, password: string) => {

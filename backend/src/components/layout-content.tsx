@@ -1,12 +1,13 @@
 "use client";
 
 import { useAuth } from "@/components/providers/auth-provider";
-import { usePathname } from "next/navigation";
+import {usePathname, useRouter} from "next/navigation";
 import Sidebar from "@/components/sidebar";
 
 export function LayoutContent({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
 
     // Pages publiques qui ne nécessitent pas d'authentification
     const publicPages = ["/login"];
@@ -29,7 +30,7 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
     // Si l'utilisateur n'est pas connecté et n'est pas sur une page publique, on laisse le children gérer la redirection
     if (!user && !isPublicPage) {
         if (typeof window !== "undefined") {
-            window.location.href = "/login";
+            router.push("/login")
         }
         return null;
     }

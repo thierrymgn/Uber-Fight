@@ -88,7 +88,6 @@ export default function EditUtilisateurPage() {
             const docRef = doc(db, "users", utilisateur.id);
             await updateDoc(docRef, {
                 username: formData.username,
-                email: formData.email,
                 role: formData.role,
             });
 
