@@ -64,7 +64,9 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private val fightRepository = FightRepository()
     private val userRepository = UserRepository()
     private lateinit var googleMap: GoogleMap
-    private val userId = FirebaseAuth.getInstance().currentUser!!.uid
+    
+    private val currentUserId: String?
+        get() = FirebaseAuth.getInstance().currentUser?.uid
     
     private var selectedLocation: LatLng? = null
     private var currentUserLocation: Location? = null
@@ -124,7 +126,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun listenToCurrentRequest() {
-        fightRepository.listenToCurrentRequest(userId) { fight ->
+        val uid = currentUserId ?: return
+        fightRepository.listenToCurrentRequest(uid) { fight ->
             if (_binding == null) return@listenToCurrentRequest
             currentFightId = fight?.id
             updateUIBasedOnFightStatus(fight)
