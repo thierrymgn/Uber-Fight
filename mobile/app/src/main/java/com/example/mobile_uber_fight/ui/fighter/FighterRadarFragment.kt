@@ -132,6 +132,15 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun drawRouteToFight() {
+        val safeContext = context ?: return
+        if (ContextCompat.checkSelfPermission(
+                safeContext,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
         val fight = currentActiveFight ?: return
         val fightLoc = fight.location ?: return
         
@@ -144,7 +153,6 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 
                 lifecycleScope.launch {
                     val route = DirectionsService.getDirections(origin, destination)
-                    // Double vérification : le combat est-il toujours actif après l'appel réseau ?
                     if (route != null && isAdded && _binding != null && currentActiveFight != null) {
                         polyline?.remove()
                         polyline = googleMap.addPolyline(PolylineOptions()
