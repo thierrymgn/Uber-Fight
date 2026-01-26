@@ -59,7 +59,7 @@ import com.example.mobile_uber_fight.BuildConfig
 class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private var _binding: FragmentClientHomeBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding
 
     private val fightRepository = FightRepository()
     private val userRepository = UserRepository()
@@ -97,7 +97,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentClientHomeBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding!!.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -105,7 +105,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         
         initPlaces()
         
-        val mapFragment = childFragmentManager.findFragmentById(binding.map.id) as SupportMapFragment
+        val mapFragment = childFragmentManager.findFragmentById(binding!!.map.id) as SupportMapFragment
         mapFragment.getMapAsync(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         setupLocationCallback()
@@ -120,11 +120,12 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         }
         placesClient = Places.createClient(requireContext())
         placesAdapter = PlacesAdapter(requireContext(), placesClient)
-        binding.etAddress.setAdapter(placesAdapter)
+        binding?.etAddress?.setAdapter(placesAdapter)
     }
 
     private fun listenToCurrentRequest() {
         fightRepository.listenToCurrentRequest(userId) { fight ->
+            if (_binding == null) return@listenToCurrentRequest
             currentFightId = fight?.id
             updateUIBasedOnFightStatus(fight)
             
@@ -140,6 +141,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         if (fighterLocationListener != null) return
 
         fighterLocationListener = userRepository.listenToUserLocation(fighterId) { geoPoint ->
+            if (_binding == null) return@listenToUserLocation
             geoPoint?.let { gp ->
                 val fighterLatLng = LatLng(gp.latitude, gp.longitude)
                 updateFighterMarker(fighterLatLng)
@@ -159,10 +161,11 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         fighterMarker = null
         polyline?.remove()
         polyline = null
-        binding.cvEta.visibility = View.GONE
+        binding?.cvEta?.visibility = View.GONE
     }
 
     private fun updateFighterMarker(latLng: LatLng) {
+        if (_binding == null) return
         val fighterIcon = bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)
         if (fighterMarker == null) {
             fighterMarker = googleMap.addMarker(MarkerOptions()
@@ -177,15 +180,15 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun drawRoute(origin: LatLng, destination: LatLng) {
         lifecycleScope.launch {
             val route = DirectionsService.getDirections(origin, destination)
-            if (route != null && isAdded) {
+            if (route != null && isAdded && _binding != null) {
                 polyline?.remove()
                 polyline = googleMap.addPolyline(PolylineOptions()
                     .addAll(route.polyline)
                     .color(Color.BLUE)
                     .width(10f))
                 
-                binding.tvEta.text = "Arrivée dans ${route.duration} (${route.distance})"
-                binding.cvEta.visibility = View.VISIBLE
+                binding?.tvEta?.text = "Arrivée dans ${route.duration} (${route.distance})"
+                binding?.cvEta?.visibility = View.VISIBLE
 
                 val bounds = LatLngBounds.Builder()
                     .include(origin)
@@ -197,31 +200,32 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun updateUIBasedOnFightStatus(fight: Fight?) {
+        if (_binding == null) return
         when (fight?.status) {
             "PENDING" -> {
-                binding.formLayout.visibility = View.GONE
-                binding.pendingLayout.visibility = View.VISIBLE
-                binding.acceptedLayout.visibility = View.GONE
-                binding.ivMapCenterPin.visibility = View.GONE
+                binding?.formLayout?.visibility = View.GONE
+                binding?.pendingLayout?.visibility = View.VISIBLE
+                binding?.acceptedLayout?.visibility = View.GONE
+                binding?.ivMapCenterPin?.visibility = View.GONE
             }
             "ACCEPTED" -> {
-                binding.formLayout.visibility = View.GONE
-                binding.pendingLayout.visibility = View.GONE
-                binding.acceptedLayout.visibility = View.VISIBLE
-                binding.ivMapCenterPin.visibility = View.GONE
-                binding.tvFighterName.text = "Bagarreur en route !"
+                binding?.formLayout?.visibility = View.GONE
+                binding?.pendingLayout?.visibility = View.GONE
+                binding?.acceptedLayout?.visibility = View.VISIBLE
+                binding?.ivMapCenterPin?.visibility = View.GONE
+                binding?.tvFighterName?.text = "Bagarreur en route !"
             }
             else -> {
-                binding.formLayout.visibility = View.VISIBLE
-                binding.pendingLayout.visibility = View.GONE
-                binding.acceptedLayout.visibility = View.GONE
-                binding.ivMapCenterPin.visibility = View.VISIBLE
+                binding?.formLayout?.visibility = View.VISIBLE
+                binding?.pendingLayout?.visibility = View.GONE
+                binding?.acceptedLayout?.visibility = View.GONE
+                binding?.ivMapCenterPin?.visibility = View.VISIBLE
             }
         }
     }
 
     private fun setupBottomSheet() {
-        BottomSheetBehavior.from(binding.bottomSheet).apply {
+        BottomSheetBehavior.from(binding!!.bottomSheet).apply {
             peekHeight = 250
             state = BottomSheetBehavior.STATE_EXPANDED
         }
@@ -232,11 +236,11 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         
         googleMap.uiSettings.isZoomControlsEnabled = true
         googleMap.uiSettings.isMyLocationButtonEnabled = false
-        val paddingBottom = (100 * resources.displayMetrics.density).toInt()
+        val paddingBottom = (300 * resources.displayMetrics.density).toInt()
         googleMap.setPadding(0, 0, 0, paddingBottom)
 
         googleMap.setOnCameraIdleListener {
-            if (!isSearchingAddress) {
+            if (_binding != null && !isSearchingAddress) {
                 val center = googleMap.cameraPosition.target
                 selectedLocation = center
                 getAddressFromCoordinates(center)
@@ -245,13 +249,14 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
         checkLocationPermission()
         userRepository.listenToNearbyFighters { fighters ->
+            if (_binding == null) return@listenToNearbyFighters
             this.fightersList = fighters
             displayFightersOnMap()
         }
     }
 
     private fun displayFightersOnMap() {
-        if (!::googleMap.isInitialized) return
+        if (!::googleMap.isInitialized || _binding == null) return
         val myLocation = currentUserLocation ?: return
         
         if (fighterLocationListener == null) {
@@ -284,13 +289,13 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun setupLocationCallback() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
+                if (_binding == null) return
                 locationResult.lastLocation?.let { location ->
                     currentUserLocation = location
                     userRepository.updateUserLocation(location.latitude, location.longitude)
                     if (fightersList.isNotEmpty()) displayFightersOnMap()
                     if (isFirstLocationUpdate) {
-                        val currentLatLng = LatLng(location.latitude, location.longitude)
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15f))
                         isFirstLocationUpdate = false
                     }
                 }
@@ -303,25 +308,31 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             try {
                 val geocoder = Geocoder(requireContext(), Locale.getDefault())
                 val addresses = withContext(Dispatchers.IO) { geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1) }
-                binding.etAddress.setText(addresses?.firstOrNull()?.getAddressLine(0) ?: "Position sur la carte")
-            } catch (e: Exception) { binding.etAddress.setText("Position sur la carte") }
+                if (_binding != null) {
+                    binding?.etAddress?.setText(addresses?.firstOrNull()?.getAddressLine(0) ?: "Position sur la carte")
+                }
+            } catch (e: Exception) { 
+                if (_binding != null) {
+                    binding?.etAddress?.setText("Position sur la carte") 
+                }
+            }
         }
     }
 
     private fun setupListeners() {
-        binding.btnOrderFight.setOnClickListener { handleOrderFightClick() }
-        binding.btnCancelSearch.setOnClickListener { handleCancelFightClick() }
-        binding.fabLocateMe.setOnClickListener {
+        binding?.btnOrderFight?.setOnClickListener { handleOrderFightClick() }
+        binding?.btnCancelSearch?.setOnClickListener { handleCancelFightClick() }
+        binding?.fabLocateMe?.setOnClickListener {
             isFirstLocationUpdate = true
             checkLocationPermission()
         }
 
-        binding.etAddress.setOnItemClickListener { _, _, position, _ ->
+        binding?.etAddress?.setOnItemClickListener { _, _, position, _ ->
             val placeId = placesAdapter.getPlaceId(position)
             fetchPlaceDetails(placeId)
         }
 
-        binding.etAddress.setOnEditorActionListener { v, actionId, _ ->
+        binding?.etAddress?.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
                 searchAddress(v.text.toString())
                 hideKeyboard(v)
@@ -336,14 +347,16 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
         isSearchingAddress = true
         placesClient.fetchPlace(request).addOnSuccessListener { response ->
+            if (_binding == null) return@addOnSuccessListener
             val place = response.place
             place.location?.let { latLng ->
                 selectedLocation = latLng
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-                hideKeyboard(binding.etAddress)
+                hideKeyboard(binding!!.etAddress)
             }
             isSearchingAddress = false
         }.addOnFailureListener {
+            if (_binding == null) return@addOnFailureListener
             isSearchingAddress = false
             Toast.makeText(requireContext(), "Erreur lors de la récupération du lieu", Toast.LENGTH_SHORT).show()
         }
@@ -356,16 +369,18 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 isSearchingAddress = true
                 val geocoder = Geocoder(requireContext(), Locale.getDefault())
                 val addresses = withContext(Dispatchers.IO) { geocoder.getFromLocationName(addressText, 1) }
-                if (!addresses.isNullOrEmpty()) {
+                if (!addresses.isNullOrEmpty() && _binding != null) {
                     val address = addresses[0]
                     val latLng = LatLng(address.latitude, address.longitude)
                     selectedLocation = latLng
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-                } else {
+                } else if (_binding != null) {
                     Toast.makeText(requireContext(), "Adresse introuvable", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Erreur de recherche", Toast.LENGTH_SHORT).show()
+                if (_binding != null) {
+                    Toast.makeText(requireContext(), "Erreur de recherche", Toast.LENGTH_SHORT).show()
+                }
             } finally {
                 isSearchingAddress = false
             }
@@ -373,24 +388,28 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun handleOrderFightClick() {
-        val address = binding.etAddress.text.toString().trim()
+        val address = binding?.etAddress?.text.toString().trim()
         val loc = selectedLocation
         if (address.isEmpty() || loc == null) {
-            binding.tilAddress.error = "Sélectionnez un lieu"
+            binding?.tilAddress?.error = "Sélectionnez un lieu"
             return
         }
         setLoadingState(true)
-        val selectedId = binding.rgFightType.checkedRadioButtonId
+        val selectedId = binding?.rgFightType?.checkedRadioButtonId ?: -1
         val type = view?.findViewById<RadioButton>(selectedId)?.text.toString()
 
         fightRepository.createFightRequest(address, loc.latitude, loc.longitude, type,
             onSuccess = { fightId ->
-                setLoadingState(false)
-                currentFightId = fightId
+                if (_binding != null) {
+                    setLoadingState(false)
+                    currentFightId = fightId
+                }
             },
             onFailure = { 
-                setLoadingState(false)
-                Toast.makeText(requireContext(), "Erreur : ${it.message}", Toast.LENGTH_LONG).show()
+                if (_binding != null) {
+                    setLoadingState(false)
+                    Toast.makeText(requireContext(), "Erreur : ${it.message}", Toast.LENGTH_LONG).show()
+                }
             }
         )
     }
@@ -399,17 +418,19 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         val id = currentFightId ?: return
         setLoadingState(true)
         fightRepository.cancelFight(id,
-            onSuccess = { setLoadingState(false) },
+            onSuccess = { if (_binding != null) setLoadingState(false) },
             onFailure = {
-                setLoadingState(false)
-                Toast.makeText(requireContext(), "Erreur d\'annulation", Toast.LENGTH_SHORT).show()
+                if (_binding != null) {
+                    setLoadingState(false)
+                    Toast.makeText(requireContext(), "Erreur d\'annulation", Toast.LENGTH_SHORT).show()
+                }
             }
         )
     }
 
     private fun setLoadingState(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        binding.btnOrderFight.isEnabled = !isLoading
+        binding?.progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding?.btnOrderFight?.isEnabled = !isLoading
     }
 
     private fun hideKeyboard(view: View) {
@@ -424,6 +445,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
+        if (!::googleMap.isInitialized) return
         googleMap.isMyLocationEnabled = true
         val request = LocationRequest.create().apply {
             interval = 10000
@@ -431,6 +453,13 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             priority = Priority.PRIORITY_HIGH_ACCURACY
         }
         fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            startLocationUpdates()
+        }
     }
 
     override fun onPause() {

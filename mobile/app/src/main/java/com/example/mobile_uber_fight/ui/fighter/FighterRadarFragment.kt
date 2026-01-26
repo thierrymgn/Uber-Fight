@@ -41,7 +41,7 @@ import androidx.core.graphics.createBitmap
 class FighterRadarFragment : Fragment(), OnMapReadyCallback {
 
     private var _binding: FragmentFighterRadarBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding
 
     private val fightRepository = FightRepository()
     private val userRepository = UserRepository()
@@ -68,7 +68,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentFighterRadarBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding!!.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -77,7 +77,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         setupLocationCallback()
 
-        val mapFragment = childFragmentManager.findFragmentById(binding.map.id) as SupportMapFragment
+        val mapFragment = childFragmentManager.findFragmentById(binding!!.map.id) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         setupBottomSheet()
@@ -87,13 +87,15 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     private fun listenToMyActiveFight() {
         fightRepository.listenToMyActiveFight(
             onFightFound = { fight ->
+                if (_binding == null) return@listenToMyActiveFight
+                
                 currentActiveFight = fight
                 if (::googleMap.isInitialized) {
                     drawRouteToFight()
                 }
                 
                 if (fight == null) {
-                    binding.cvTripInfo.visibility = View.GONE
+                    binding?.cvTripInfo?.visibility = View.GONE
                 }
             },
             onFailure = { /* Handle error */ }
@@ -101,7 +103,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun setupBottomSheet() {
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.missionBottomSheet)
+        bottomSheetBehavior = BottomSheetBehavior.from(binding!!.missionBottomSheet)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
@@ -125,21 +127,23 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         val fightLoc = fight.location ?: return
         
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (_binding == null) return@addOnSuccessListener
+            
             location?.let {
                 val origin = LatLng(it.latitude, it.longitude)
                 val destination = LatLng(fightLoc.latitude, fightLoc.longitude)
                 
                 lifecycleScope.launch {
                     val route = DirectionsService.getDirections(origin, destination)
-                    if (route != null && isAdded) {
+                    if (route != null && isAdded && _binding != null) {
                         polyline?.remove()
                         polyline = googleMap.addPolyline(PolylineOptions()
                             .addAll(route.polyline)
                             .color(Color.BLUE)
                             .width(10f))
                         
-                        binding.tvTripInfo.text = "${route.duration} • ${route.distance}"
-                        binding.cvTripInfo.visibility = View.VISIBLE
+                        binding?.tvTripInfo?.text = "${route.duration} • ${route.distance}"
+                        binding?.cvTripInfo?.visibility = View.VISIBLE
                         
                         val bounds = LatLngBounds.Builder()
                             .include(origin)
@@ -162,7 +166,9 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         }
 
         googleMap.setOnMapClickListener {
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            if (_binding != null) {
+                bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+            }
         }
     }
 
@@ -176,7 +182,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                         drawRouteToFight()
                     }
 
-                    if (isFirstLocationUpdate) {
+                    if (isFirstLocationUpdate && _binding != null) {
                         val userLatLng = LatLng(location.latitude, location.longitude)
                         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 14f))
                         isFirstLocationUpdate = false
@@ -187,10 +193,10 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun showMissionDetails(fight: Fight) {
-        binding.tvFightTitle.text = fight.fightType
-        binding.tvFightAddress.text = fight.address
+        binding?.tvFightTitle?.text = fight.fightType
+        binding?.tvFightAddress?.text = fight.address
         
-        binding.btnAcceptMission.setOnClickListener {
+        binding?.btnAcceptMission?.setOnClickListener {
             acceptFightOffer(fight)
         }
         
@@ -201,13 +207,13 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         setLoadingState(true)
         fightRepository.listenToPendingFights(
             onUpdate = { fights ->
-                if (isAdded) {
+                if (isAdded && _binding != null) {
                     setLoadingState(false)
                     updateMapMarkers(fights)
                 }
             },
             onFailure = { exception ->
-                if (isAdded) {
+                if (isAdded && _binding != null) {
                     setLoadingState(false)
                     Toast.makeText(requireContext(), "Erreur: ${exception.message}", Toast.LENGTH_LONG).show()
                 }
@@ -218,16 +224,16 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     private fun updateMapMarkers(fights: List<Fight>) {
         if (currentActiveFight != null) {
             googleMap.clear()
-            binding.tvEmpty.visibility = View.GONE
+            binding?.tvEmpty?.visibility = View.GONE
             return
         }
         
         googleMap.clear()
         
         if (fights.isEmpty()) {
-            binding.tvEmpty.visibility = View.VISIBLE
+            binding?.tvEmpty?.visibility = View.VISIBLE
         } else {
-            binding.tvEmpty.visibility = View.GONE
+            binding?.tvEmpty?.visibility = View.GONE
             
             fights.forEach { fight ->
                 val loc = fight.location ?: return@forEach
@@ -248,14 +254,14 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         setLoadingState(true)
         fightRepository.acceptFight(fight.id,
             onSuccess = {
-                if (isAdded) {
+                if (isAdded && _binding != null) {
                     setLoadingState(false)
                     bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
                     Toast.makeText(requireContext(), "Mission acceptée !", Toast.LENGTH_LONG).show()
                 }
             },
             onFailure = { exception ->
-                if (isAdded) {
+                if (isAdded && _binding != null) {
                     setLoadingState(false)
                     Toast.makeText(requireContext(), "Erreur: ${exception.message}", Toast.LENGTH_LONG).show()
                 }
@@ -291,7 +297,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun setLoadingState(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding?.progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 
     private fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
@@ -303,6 +309,17 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 BitmapDescriptorFactory.fromBitmap(bitmap)
             }
         } catch (e: Exception) { null }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            startLocationUpdates()
+        }
     }
 
     override fun onPause() {
