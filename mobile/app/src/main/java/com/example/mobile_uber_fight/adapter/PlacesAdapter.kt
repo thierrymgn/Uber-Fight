@@ -5,6 +5,8 @@ import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Filter
 import android.widget.Filterable
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.Tasks
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken
 import com.google.android.libraries.places.api.model.PlaceTypes
@@ -16,6 +18,7 @@ class PlacesAdapter(context: Context, private val placesClient: PlacesClient) :
     ArrayAdapter<String>(context, android.R.layout.simple_expandable_list_item_1), Filterable {
 
     private var resultList: List<PlaceAutocomplete> = ArrayList()
+    private var cancellationTokenSource: CancellationTokenSource? = null
 
     override fun getCount(): Int = resultList.size
 
@@ -25,8 +28,12 @@ class PlacesAdapter(context: Context, private val placesClient: PlacesClient) :
         return object : Filter() {
             override fun performFiltering(constraint: CharSequence?): FilterResults {
                 val filterResults = FilterResults()
-                if (constraint != null) {
-                    resultList = getAutocomplete(constraint)
+
+                cancellationTokenSource?.cancel()
+                cancellationTokenSource = CancellationTokenSource()
+
+                if (!constraint.isNullOrBlank()) {
+                    resultList = getAutocomplete(constraint, cancellationTokenSource!!.token)
                     filterResults.values = resultList
                     filterResults.count = resultList.size
                 }
@@ -43,7 +50,7 @@ class PlacesAdapter(context: Context, private val placesClient: PlacesClient) :
         }
     }
 
-    private fun getAutocomplete(constraint: CharSequence): List<PlaceAutocomplete> {
+    private fun getAutocomplete(constraint: CharSequence, cancellationToken: CancellationToken): List<PlaceAutocomplete> {
         val list = mutableListOf<PlaceAutocomplete>()
         val token = AutocompleteSessionToken.newInstance()
 
@@ -52,12 +59,13 @@ class PlacesAdapter(context: Context, private val placesClient: PlacesClient) :
             .setTypesFilter(listOf(PlaceTypes.ADDRESS))
             .setSessionToken(token)
             .setQuery(constraint.toString())
+            .setCancellationToken(cancellationToken)
             .build()
 
         try {
             val task = placesClient.findAutocompletePredictions(request)
-            val response = Tasks.await(task, 60, TimeUnit.SECONDS)
-            
+            val response = Tasks.await(task, 5, TimeUnit.SECONDS)
+
             for (prediction in response.autocompletePredictions) {
                 list.add(
                     PlaceAutocomplete(
@@ -67,7 +75,10 @@ class PlacesAdapter(context: Context, private val placesClient: PlacesClient) :
                 )
             }
         } catch (e: Exception) {
-            Log.e("PlacesAdapter", "Error getting autocomplete prediction", e)
+            val cause = e.cause
+            if (e !is java.util.concurrent.CancellationException && cause !is java.util.concurrent.CancellationException) {
+                Log.e("PlacesAdapter", "Error getting autocomplete prediction", e)
+            }
         }
 
         return list
