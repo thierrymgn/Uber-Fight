@@ -216,7 +216,11 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun updateMapMarkers(fights: List<Fight>) {
-        if (currentActiveFight != null) return
+        if (currentActiveFight != null) {
+            googleMap.clear()
+            binding.tvEmpty.visibility = View.GONE
+            return
+        }
         
         googleMap.clear()
         
