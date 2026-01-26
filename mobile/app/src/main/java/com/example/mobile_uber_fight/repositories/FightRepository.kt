@@ -74,6 +74,8 @@ class FightRepository {
         fightsCollection
             .whereEqualTo("requesterId", userId)
             .whereIn("status", listOf("PENDING", "ACCEPTED", "IN_PROGRESS"))
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(1)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     onUpdate(null)
@@ -126,6 +128,8 @@ class FightRepository {
         fightsCollection
             .whereEqualTo("fighterId", currentUser.uid)
             .whereIn("status", listOf("ACCEPTED", "IN_PROGRESS"))
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(1)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     onFailure(e)
