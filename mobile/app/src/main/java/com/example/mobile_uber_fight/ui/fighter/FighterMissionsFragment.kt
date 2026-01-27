@@ -34,7 +34,7 @@ class FighterMissionsFragment : Fragment() {
     private fun listenForActiveFight() {
         fightRepository.listenToMyActiveFight(
             onFightFound = {
-                if (isAdded) { // Vérifie que le fragment est toujours là
+                if (isAdded) {
                     updateUi(it)
                 }
             },
@@ -55,14 +55,29 @@ class FighterMissionsFragment : Fragment() {
             binding.tvFightType.text = activeFight.fightType
 
             binding.btnAction.setOnClickListener {
-                // Logique à venir : changer le statut du combat, etc.
-                Toast.makeText(requireContext(), "Action pour le combat ${activeFight.id}", Toast.LENGTH_SHORT).show()
+                finishFight(activeFight.id)
             }
 
         } else {
             binding.layoutMissionDetails.visibility = View.GONE
             binding.tvNoActiveMission.visibility = View.VISIBLE
         }
+    }
+
+    private fun finishFight(fightId: String) {
+        fightRepository.finishFight(
+            fightId = fightId,
+            onSuccess = {
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Combat terminé !", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onFailure = { exception ->
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Erreur lors de la finalisation: ${exception.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        )
     }
 
     override fun onDestroyView() {

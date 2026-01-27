@@ -2,6 +2,7 @@ package com.example.mobile_uber_fight.repositories
 
 import com.example.mobile_uber_fight.models.Fight
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
@@ -17,7 +18,7 @@ class FightRepository {
         lat: Double,
         lng: Double,
         fightType: String,
-        onSuccess: () -> Unit,
+        onSuccess: (String) -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         val currentUser = auth.currentUser
@@ -26,15 +27,28 @@ class FightRepository {
             return
         }
 
-        val newFight = Fight(
-            requesterId = currentUser.uid,
-            status = "PENDING",
-            fightType = fightType,
-            location = GeoPoint(lat, lng),
-            address = address
+        // On utilise une Map pour pouvoir envoyer FieldValue.serverTimestamp()
+        // et ainsi satisfaire la règle de sécurité : request.resource.data.createdAt == request.time
+        val fightData = hashMapOf(
+            "requesterId" to currentUser.uid,
+            "status" to "PENDING",
+            "fightType" to fightType,
+            "location" to GeoPoint(lat, lng),
+            "address" to address,
+            "fighterId" to null,
+            "createdAt" to FieldValue.serverTimestamp()
         )
 
-        fightsCollection.add(newFight)
+        fightsCollection.add(fightData)
+            .addOnSuccessListener { documentReference ->
+                onSuccess(documentReference.id)
+            }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun cancelFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        fightsCollection.document(fightId)
+            .update("status", "CANCELLED")
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }
@@ -56,6 +70,29 @@ class FightRepository {
             }
     }
 
+    fun listenToCurrentRequest(userId: String, onUpdate: (Fight?) -> Unit) {
+        fightsCollection
+            .whereEqualTo("requesterId", userId)
+            .whereIn("status", listOf("PENDING", "ACCEPTED", "IN_PROGRESS"))
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(1)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    onUpdate(null)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null && !snapshots.isEmpty) {
+                    val fight = snapshots.documents.first().toObject(Fight::class.java)?.copy(
+                        id = snapshots.documents.first().id
+                    )
+                    onUpdate(fight)
+                } else {
+                    onUpdate(null)
+                }
+            }
+    }
+
     fun acceptFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         val fighterId = auth.currentUser?.uid
         if (fighterId == null) {
@@ -74,6 +111,13 @@ class FightRepository {
             .addOnFailureListener { e -> onFailure(e) }
     }
 
+    fun finishFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        fightsCollection.document(fightId)
+            .update("status", "COMPLETED")
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
     fun listenToMyActiveFight(onFightFound: (Fight?) -> Unit, onFailure: (Exception) -> Unit) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
@@ -84,6 +128,8 @@ class FightRepository {
         fightsCollection
             .whereEqualTo("fighterId", currentUser.uid)
             .whereIn("status", listOf("ACCEPTED", "IN_PROGRESS"))
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .limit(1)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     onFailure(e)
