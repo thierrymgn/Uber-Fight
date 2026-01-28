@@ -11,12 +11,15 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     defaults:
       run:
@@ -46,6 +49,30 @@ jobs:
       - name: Create google-services.json
         if: env.GOOGLE_SERVICES_JSON != ''
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+
+      - name: Create placeholder google-services.json if missing
+        if: env.GOOGLE_SERVICES_JSON == ''
+        run: |
+          echo '{
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "mock-project-id",
+              "storage_bucket": "mock-bucket.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": {
+                    "package_name": "com.example.mobile_uber_fight"
+                  }
+                },
+                "api_key": [ { "current_key": "mock-api-key" } ]
+              }
+            ]
+          }' > app/google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
