@@ -13,6 +13,58 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+        <!-- Overlay for IN_PROGRESS state -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/overlayInProgress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#E6000000"
+            android:elevation="20dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/tvCombatEmoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🥊"
+                android:textSize="70sp"
+                app:layout_constraintBottom_toTopOf="@+id/tvCombatTitle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed" />
+
+            <TextView
+                android:id="@+id/tvCombatTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="COMBAT EN COURS..."
+                android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toTopOf="@+id/tvChrono"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvCombatEmoji" />
+
+            <TextView
+                android:id="@+id/tvChrono"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="00:00"
+                android:textAppearance="@style/TextAppearance.Material3.DisplayLarge"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvCombatTitle"
+                tools:text="05:12" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- ETA View -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cvEta"
             android:layout_width="wrap_content"
