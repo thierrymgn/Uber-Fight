@@ -214,8 +214,19 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         binding?.tvFightTitle?.text = fight.fightType
         binding?.tvFightAddress?.text = fight.address
         
-        binding?.btnAcceptMission?.setOnClickListener {
-            acceptFightOffer(fight)
+        if (currentActiveFight != null) {
+            binding?.btnAcceptMission?.isEnabled = false
+            binding?.btnAcceptMission?.text = "VOUS AVEZ DÉJÀ UN DUEL EN COURS"
+            binding?.btnAcceptMission?.alpha = 0.5f
+        } else {
+            binding?.btnAcceptMission?.isEnabled = true
+            binding?.btnAcceptMission?.text = "ACCEPTER LA MISSION"
+            binding?.btnAcceptMission?.alpha = 1.0f
+            
+            binding?.btnAcceptMission?.setOnClickListener {
+                binding?.btnAcceptMission?.isEnabled = false
+                acceptFightOffer(fight)
+            }
         }
         
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
@@ -280,6 +291,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
             onFailure = { exception ->
                 if (isAdded && _binding != null) {
                     setLoadingState(false)
+                    binding?.btnAcceptMission?.isEnabled = true // Réactiver en cas d'échec
                     Toast.makeText(requireContext(), "Erreur: ${exception.message}", Toast.LENGTH_LONG).show()
                 }
             }
