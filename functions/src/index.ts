@@ -21,7 +21,7 @@ export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (ev
 
     console.log(`Review reçue pour User: ${targetUserId} | Note: ${newRating}`);
 
-    if (!targetUserId || !newRating) {
+    if (!targetUserId || newRating === undefined || newRating === null || Number.isNaN(newRating)) {
         console.error("❌ Données invalides (toUserId ou rating manquant).");
         return;
     }
@@ -44,7 +44,7 @@ export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (ev
             console.log(`📊 Avant: Moyenne ${oldRating} (${oldCount} votes)`);
 
             const newCount = oldCount + 1;
-            const newAverage = ((oldRating * oldCount) + newRating) / newCount;
+            const newAverage = oldRating + (newRating - oldRating) / newCount;
 
             transaction.update(userRef, {
                 rating: newAverage,
