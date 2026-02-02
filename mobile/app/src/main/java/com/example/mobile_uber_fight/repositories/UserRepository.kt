@@ -59,4 +59,33 @@ class UserRepository {
                 onUpdate(location)
             }
     }
+
+    fun submitRating(
+        targetUserId: String,
+        fightId: String,
+        rating: Float,
+        comment: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val currentUser = auth.currentUser ?: return
+
+        val reviewData = hashMapOf(
+            "fromUserId" to currentUser.uid,
+            "toUserId" to targetUserId,
+            "fightId" to fightId,
+            "rating" to rating.toDouble(),
+            "comment" to comment,
+            "createdAt" to com.google.firebase.Timestamp.now()
+        )
+
+        db.collection("reviews")
+            .add(reviewData)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                onFailure(e)
+            }
+    }
 }

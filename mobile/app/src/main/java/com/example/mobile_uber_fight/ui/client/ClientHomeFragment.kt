@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
+import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
@@ -30,6 +31,7 @@ import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.models.User
 import com.example.mobile_uber_fight.repositories.FightRepository
 import com.example.mobile_uber_fight.repositories.UserRepository
+import com.example.mobile_uber_fight.ui.shared.RatingBottomSheetFragment
 import com.example.mobile_uber_fight.utils.DirectionsService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -72,6 +74,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private var currentUserLocation: Location? = null
     private var fightersList: List<User> = emptyList()
     private var currentFightId: String? = null
+    private var currentFight: Fight? = null
     private var isSearchingAddress = false
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -84,6 +87,18 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private var fighterLocationListener: ListenerRegistration? = null
     private var fighterMarker: Marker? = null
     private var polyline: Polyline? = null
+
+    private var chronoHandler = Handler(Looper.getMainLooper())
+    private var secondsElapsed = 0
+    private val chronoRunnable = object : Runnable {
+        override fun run() {
+            secondsElapsed++
+            val mins = secondsElapsed / 60
+            val secs = secondsElapsed % 60
+            binding?.tvChrono?.text = String.format("%02d:%02d", mins, secs)
+            chronoHandler.postDelayed(this, 1000)
+        }
+    }
 
     companion object {
         private const val TAG = "ClientHomeFragment"
@@ -113,7 +128,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         setupLocationCallback()
         setupBottomSheet()
         setupListeners()
-        listenToCurrentRequest()
     }
 
     private fun initPlaces() {
@@ -129,6 +143,12 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         val uid = currentUserId ?: return
         fightRepository.listenToCurrentRequest(uid) { fight ->
             if (_binding == null) return@listenToCurrentRequest
+            
+            if (currentFight?.status == "IN_PROGRESS" && fight == null) {
+                openRatingAndReset(currentFight!!)
+            }
+
+            currentFight = fight
             currentFightId = fight?.id
             updateUIBasedOnFightStatus(fight)
             
@@ -141,6 +161,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun startTrackingFighter(fighterId: String, fight: Fight) {
+        if (!::googleMap.isInitialized) return
+        
         if (fighterLocationListener != null) return
 
         googleMap.clear()
@@ -168,11 +190,13 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         polyline = null
         binding?.cvEta?.visibility = View.GONE
         
-        displayFightersOnMap()
+        if (::googleMap.isInitialized) {
+            displayFightersOnMap()
+        }
     }
 
     private fun updateFighterMarker(latLng: LatLng) {
-        if (_binding == null) return
+        if (_binding == null || !::googleMap.isInitialized) return
         val fighterIcon = bitmapDescriptorFromVector(requireContext(), R.drawable.ic_fighter_marker)
         if (fighterMarker == null) {
             fighterMarker = googleMap.addMarker(MarkerOptions()
@@ -187,7 +211,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun drawRoute(origin: LatLng, destination: LatLng) {
         lifecycleScope.launch {
             val route = DirectionsService.getDirections(origin, destination)
-            if (route != null && isAdded && _binding != null) {
+            if (route != null && isAdded && _binding != null && ::googleMap.isInitialized) {
                 polyline?.remove()
                 polyline = googleMap.addPolyline(PolylineOptions()
                     .addAll(route.polyline)
@@ -208,12 +232,15 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private fun updateUIBasedOnFightStatus(fight: Fight?) {
         if (_binding == null) return
+        
         when (fight?.status) {
             "PENDING" -> {
                 binding?.formLayout?.visibility = View.GONE
                 binding?.pendingLayout?.visibility = View.VISIBLE
                 binding?.acceptedLayout?.visibility = View.GONE
                 binding?.ivMapCenterPin?.visibility = View.GONE
+                binding?.overlayInProgress?.visibility = View.GONE
+                stopChrono()
             }
             "ACCEPTED" -> {
                 binding?.formLayout?.visibility = View.GONE
@@ -221,13 +248,46 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 binding?.acceptedLayout?.visibility = View.VISIBLE
                 binding?.ivMapCenterPin?.visibility = View.GONE
                 binding?.tvFighterName?.text = "Bagarreur en route !"
+                binding?.overlayInProgress?.visibility = View.GONE
+                stopChrono()
+            }
+            "IN_PROGRESS" -> {
+                binding?.formLayout?.visibility = View.GONE
+                binding?.pendingLayout?.visibility = View.GONE
+                binding?.acceptedLayout?.visibility = View.GONE
+                binding?.ivMapCenterPin?.visibility = View.GONE
+                binding?.overlayInProgress?.visibility = View.VISIBLE
+                startChrono()
             }
             else -> {
                 binding?.formLayout?.visibility = View.VISIBLE
                 binding?.pendingLayout?.visibility = View.GONE
                 binding?.acceptedLayout?.visibility = View.GONE
                 binding?.ivMapCenterPin?.visibility = View.VISIBLE
+                binding?.overlayInProgress?.visibility = View.GONE
+                stopChrono()
             }
+        }
+    }
+
+    private fun startChrono() {
+        if (secondsElapsed == 0) {
+            chronoHandler.post(chronoRunnable)
+        }
+    }
+
+    private fun stopChrono() {
+        chronoHandler.removeCallbacks(chronoRunnable)
+        secondsElapsed = 0
+        binding?.tvChrono?.text = "00:00"
+    }
+
+    private fun openRatingAndReset(fight: Fight) {
+        fight.fighterId?.let { fighterId ->
+            val ratingFragment = RatingBottomSheetFragment.newInstance(fighterId, fight.id) {
+                // Reset UI
+            }
+            ratingFragment.show(childFragmentManager, "Rating")
         }
     }
 
@@ -260,6 +320,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             this.fightersList = fighters
             displayFightersOnMap()
         }
+        
+        listenToCurrentRequest()
     }
 
     private fun displayFightersOnMap() {
@@ -307,7 +369,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                         displayFightersOnMap()
                     }
                     
-                    if (isFirstLocationUpdate) {
+                    if (isFirstLocationUpdate && ::googleMap.isInitialized) {
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15f))
                         isFirstLocationUpdate = false
                     }
@@ -364,7 +426,9 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             val place = response.place
             place.location?.let { latLng ->
                 selectedLocation = latLng
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                if (::googleMap.isInitialized) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                }
                 hideKeyboard(binding!!.etAddress)
             }
             isSearchingAddress = false
@@ -386,7 +450,9 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                     val address = addresses[0]
                     val latLng = LatLng(address.latitude, address.longitude)
                     selectedLocation = latLng
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                    if (::googleMap.isInitialized) {
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+                    }
                 } else if (_binding != null) {
                     Toast.makeText(requireContext(), "Adresse introuvable", Toast.LENGTH_SHORT).show()
                 }
@@ -483,6 +549,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        stopChrono()
         _binding = null
     }
 }

@@ -27,8 +27,6 @@ class FightRepository {
             return
         }
 
-        // On utilise une Map pour pouvoir envoyer FieldValue.serverTimestamp()
-        // et ainsi satisfaire la règle de sécurité : request.resource.data.createdAt == request.time
         val fightData = hashMapOf(
             "requesterId" to currentUser.uid,
             "status" to "PENDING",
@@ -49,6 +47,13 @@ class FightRepository {
     fun cancelFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         fightsCollection.document(fightId)
             .update("status", "CANCELLED")
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun updateFightStatus(fightId: String, newStatus: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit = {}) {
+        fightsCollection.document(fightId)
+            .update("status", newStatus)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }
@@ -107,13 +112,6 @@ class FightRepository {
                     "fighterId" to fighterId
                 )
             )
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e) }
-    }
-
-    fun finishFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        fightsCollection.document(fightId)
-            .update("status", "COMPLETED")
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }
