@@ -1,10 +1,59 @@
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2";
 
 admin.initializeApp();
 
 setGlobalOptions({ region: "europe-west1" });
+
+
+export const onFightStatusChanged = onDocumentUpdated("fights/{fightId}", async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+
+    if (before?.status === after?.status) return;
+
+    const newStatus = after?.status;
+    const clientUserId = after?.requesterId;
+
+    let title = "";
+    let body = "";
+    let targetUserId = "";
+
+
+    if (newStatus === "ACCEPTED") {
+        title = "Combat Accepté ! 🥊";
+        body = "Un bagarreur est en route vers vous.";
+        targetUserId = clientUserId;
+    } 
+
+    else if (newStatus === "IN_PROGRESS") {
+        title = "Le duel commence ! 🔔";
+        body = "Préparez-vous à en découdre.";
+        targetUserId = clientUserId;
+    }
+
+    else if (newStatus === "COMPLETED") {
+        title = "Duel terminé 🏆";
+        body = "Merci d'avoir utilisé Uber Fight. Notez votre prestation.";
+        targetUserId = clientUserId;
+    }
+
+    if (!title || !targetUserId) return;
+
+    const userDoc = await admin.firestore().collection("users").doc(targetUserId).get();
+    const fcmToken = userDoc.data()?.fcmToken;
+
+    if (fcmToken) {
+        await admin.messaging().send({
+            token: fcmToken,
+            notification: { title, body }
+        });
+        console.log(`🔔 Notif envoyée à ${targetUserId} : ${title}`);
+    } else {
+        console.log(`🔕 Pas de token FCM pour l'user ${targetUserId}`);
+    }
+});
 
 export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (event) => {
     console.log("🚀 Trigger déclenché ! Début du calcul de moyenne.");
