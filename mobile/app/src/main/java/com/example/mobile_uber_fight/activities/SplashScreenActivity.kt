@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -35,6 +34,11 @@ class SplashScreenActivity : AppCompatActivity() {
                             RoleManager.UserRole.CLIENT -> Intent(this, ClientMainActivity::class.java)
                             RoleManager.UserRole.UNKNOWN -> Intent(this, RoleSelectionActivity::class.java)
                         }
+                        
+                        getIntent().extras?.let {
+                            intent.putExtras(it)
+                        }
+                        
                         startActivity(intent)
                         finish()
                     },

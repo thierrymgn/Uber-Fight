@@ -10,8 +10,12 @@ import com.google.firebase.messaging.FirebaseMessaging
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.mobile_uber_fight.ui.shared.RatingBottomSheetFragment
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ClientMainActivity : AppCompatActivity() {
 
@@ -30,9 +34,9 @@ class ClientMainActivity : AppCompatActivity() {
             if (!task.isSuccessful) return@addOnCompleteListener
             val token = task.result
 
-            val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
             if (uid != null) {
-                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                FirebaseFirestore.getInstance()
                     .collection("users").document(uid)
                     .update("fcmToken", token)
             }
@@ -52,5 +56,40 @@ class ClientMainActivity : AppCompatActivity() {
 
         checkNotificationPermission()
         updateFcmToken()
+        
+        handleNotificationAction()
+    }
+
+    private fun handleNotificationAction() {
+        val clickAction = intent.getStringExtra("click_action")
+        if (clickAction == "OPEN_RATING") {
+            val fightId = intent.getStringExtra("fight_id")
+            val userIdToRate = intent.getStringExtra("user_id_to_rate")
+            
+            if (fightId != null && userIdToRate != null) {
+                checkIfAlreadyRated(fightId, userIdToRate)
+            }
+        }
+    }
+
+    private fun checkIfAlreadyRated(fightId: String, userIdToRate: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        
+        FirebaseFirestore.getInstance().collection("reviews")
+            .whereEqualTo("fightId", fightId)
+            .whereEqualTo("fromUserId", currentUser.uid)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (documents.isEmpty) {
+                    val ratingFragment = RatingBottomSheetFragment.newInstance(userIdToRate, fightId) {
+                    }
+                    ratingFragment.show(supportFragmentManager, "Rating")
+                } else {
+                    Log.d("ClientMainActivity", "Combat déjà noté (ID: $fightId)")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("ClientMainActivity", "Erreur lors de la vérification de la note", e)
+            }
     }
 }
