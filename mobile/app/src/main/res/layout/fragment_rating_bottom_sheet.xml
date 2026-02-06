@@ -8,16 +8,27 @@
         android:padding="24dp"
         android:background="@drawable/bottom_sheet_background">
 
+        <ImageView
+            android:id="@+id/btnClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="4dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/black" />
+
         <TextView
             android:id="@+id/tvRatingTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:text="Notez votre adversaire"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/btnClose" />
 
         <RatingBar
             android:id="@+id/ratingBar"
@@ -54,6 +65,20 @@
             android:layout_marginTop="32dp"
             android:text="ENVOYER LA NOTE"
             app:layout_constraintTop_toBottomOf="@id/tilComment" />
+
+        <TextView
+            android:id="@+id/btnSkipRating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="Plus tard / Ne pas noter"
+            android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnSubmitRating" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

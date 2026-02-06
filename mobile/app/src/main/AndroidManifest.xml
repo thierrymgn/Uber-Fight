@@ -3,9 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
@@ -24,7 +22,7 @@
             android:value="${MAPS_API_KEY}" />
 
         <activity
-            android:name=".activities.RoleSelectionActivity"
+            android:name=".activities.SplashScreenActivity"
             android:exported="true"
             android:theme="@style/Theme.Mobileuberfight.NoActionBar">
             <intent-filter>
@@ -32,12 +30,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
-            android:name=".activities.AuthentificationActivity"
+            android:name=".activities.RoleSelectionActivity"
             android:exported="false"
             android:theme="@style/Theme.Mobileuberfight.NoActionBar" />
         <activity
-            android:name=".activities.SplashScreenActivity"
+            android:name=".activities.AuthentificationActivity"
             android:exported="false"
             android:theme="@style/Theme.Mobileuberfight.NoActionBar" />
         <activity

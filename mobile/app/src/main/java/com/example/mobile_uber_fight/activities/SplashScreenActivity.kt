@@ -4,11 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobile_uber_fight.R
+import com.example.mobile_uber_fight.utils.RoleManager
+import com.google.firebase.auth.FirebaseAuth
 
 class SplashScreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,10 +25,28 @@ class SplashScreenActivity : AppCompatActivity() {
         }
 
         Handler(Looper.getMainLooper()).postDelayed({
-            Intent(this, AuthentificationActivity::class.java).also {
-                startActivity(it)
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            
+            if (currentUser != null) {
+                RoleManager.routeUser(
+                    onSuccess = { role ->
+                        val intent = when (role) {
+                            RoleManager.UserRole.FIGHTER -> Intent(this, FighterMainActivity::class.java)
+                            RoleManager.UserRole.CLIENT -> Intent(this, ClientMainActivity::class.java)
+                            RoleManager.UserRole.UNKNOWN -> Intent(this, RoleSelectionActivity::class.java)
+                        }
+                        startActivity(intent)
+                        finish()
+                    },
+                    onFailure = {
+                        startActivity(Intent(this, AuthentificationActivity::class.java))
+                        finish()
+                    }
+                )
+            } else {
+                startActivity(Intent(this, AuthentificationActivity::class.java))
+                finish()
             }
-            finish()
         }, 2000)
     }
 }
