@@ -70,7 +70,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private val currentUserId: String?
         get() = FirebaseAuth.getInstance().currentUser?.uid
     
-    private var selectedLocation: LatLng? = null
     private var currentUserLocation: Location? = null
     private var fightersList: List<User> = emptyList()
     private var currentFightId: String? = null
@@ -162,7 +161,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private fun startTrackingFighter(fighterId: String, fight: Fight) {
         if (!::googleMap.isInitialized) return
-        
         if (fighterLocationListener != null) return
 
         googleMap.clear()
@@ -285,7 +283,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun openRatingAndReset(fight: Fight) {
         fight.fighterId?.let { fighterId ->
             val ratingFragment = RatingBottomSheetFragment.newInstance(fighterId, fight.id) {
-                // Reset UI
+                // Reset UI logic if needed
             }
             ratingFragment.show(childFragmentManager, "Rating")
         }
@@ -309,7 +307,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         googleMap.setOnCameraIdleListener {
             if (_binding != null && !isSearchingAddress) {
                 val center = googleMap.cameraPosition.target
-                selectedLocation = center
                 getAddressFromCoordinates(center)
             }
         }
@@ -328,9 +325,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         if (!::googleMap.isInitialized || _binding == null) return
         val myLocation = currentUserLocation ?: return
         
-        if (fighterLocationListener != null) {
-            return 
-        }
+        if (fighterLocationListener != null) return 
         
         googleMap.clear()
         fightersList.forEach { fighter ->
@@ -383,11 +378,11 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             try {
                 val geocoder = Geocoder(requireContext(), Locale.getDefault())
                 val addresses = withContext(Dispatchers.IO) { geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1) }
-                if (_binding != null) {
+                if (_binding != null && !isSearchingAddress) {
                     binding?.etAddress?.setText(addresses?.firstOrNull()?.getAddressLine(0) ?: "Position sur la carte")
                 }
             } catch (e: Exception) { 
-                if (_binding != null) {
+                if (_binding != null && !isSearchingAddress) {
                     binding?.etAddress?.setText("Position sur la carte") 
                 }
             }
@@ -425,7 +420,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             if (_binding == null) return@addOnSuccessListener
             val place = response.place
             place.location?.let { latLng ->
-                selectedLocation = latLng
                 if (::googleMap.isInitialized) {
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
                 }
@@ -449,7 +443,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 if (!addresses.isNullOrEmpty() && _binding != null) {
                     val address = addresses[0]
                     val latLng = LatLng(address.latitude, address.longitude)
-                    selectedLocation = latLng
                     if (::googleMap.isInitialized) {
                         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
                     }
@@ -467,17 +460,26 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun handleOrderFightClick() {
+        if (!::googleMap.isInitialized) return
+        
+        // SOURCE DE VÉRITÉ : Le centre actuel de la carte (là où est le pin noir)
+        val center = googleMap.cameraPosition.target
         val address = binding?.etAddress?.text.toString().trim()
-        val loc = selectedLocation
-        if (address.isEmpty() || loc == null) {
-            binding?.tilAddress?.error = "Sélectionnez un lieu"
+        
+        if (address.isEmpty()) {
+            binding?.tilAddress?.error = "Veuillez saisir une adresse"
             return
         }
+        
         setLoadingState(true)
         val selectedId = binding?.rgFightType?.checkedRadioButtonId ?: -1
         val type = view?.findViewById<RadioButton>(selectedId)?.text.toString()
 
-        fightRepository.createFightRequest(address, loc.latitude, loc.longitude, type,
+        fightRepository.createFightRequest(
+            address = address, 
+            lat = center.latitude, 
+            lng = center.longitude, 
+            fightType = type,
             onSuccess = { fightId ->
                 if (_binding != null) {
                     setLoadingState(false)
@@ -501,7 +503,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             onFailure = {
                 if (_binding != null) {
                     setLoadingState(false)
-                    Toast.makeText(requireContext(), "Erreur d\'annulation", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Erreur d'annulation", Toast.LENGTH_SHORT).show()
                 }
             }
         )
