@@ -1,12 +1,15 @@
 package com.example.mobile_uber_fight.services
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.activities.SplashScreenActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -28,15 +31,20 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        val title = remoteMessage.notification?.title ?: "Uber Fight"
-        val body = remoteMessage.notification?.body ?: "Nouvelle mise à jour"
+        val title = remoteMessage.notification?.title ?: remoteMessage.data["title"] ?: "Uber Fight"
+        val body = remoteMessage.notification?.body ?: remoteMessage.data["body"] ?: "Nouvelle mise à jour"
 
-        showNotification(title, body)
+        showNotification(title, body, remoteMessage.data)
     }
 
-    private fun showNotification(title: String, messageBody: String) {
-        val intent = Intent(this, SplashScreenActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    private fun showNotification(title: String, messageBody: String, data: Map<String, String>) {
+        val intent = Intent(this, SplashScreenActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            data.forEach { (key, value) ->
+                putExtra(key, value)
+            }
+        }
+
         val pendingIntent = PendingIntent.getActivity(this, 0, intent,
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
 
@@ -47,6 +55,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setContentText(messageBody)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -55,6 +64,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        notificationManager.notify(0, notificationBuilder.build())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                return
+            }
+        }
+
+        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 }
