@@ -271,6 +271,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                     MarkerOptions()
                         .position(latLng)
                         .title(fight.fightType)
+                        .anchor(0.5f, 0.5f)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
                 )
                 marker?.tag = fight
@@ -291,7 +292,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
             onFailure = { exception ->
                 if (isAdded && _binding != null) {
                     setLoadingState(false)
-                    binding?.btnAcceptMission?.isEnabled = true // Réactiver en cas d'échec
+                    binding?.btnAcceptMission?.isEnabled = true
                     Toast.makeText(requireContext(), "Erreur: ${exception.message}", Toast.LENGTH_LONG).show()
                 }
             }

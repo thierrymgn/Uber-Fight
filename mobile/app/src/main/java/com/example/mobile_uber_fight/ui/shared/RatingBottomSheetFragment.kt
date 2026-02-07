@@ -38,7 +38,7 @@ class RatingBottomSheetFragment : BottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        isCancelable = false // Force rating
+        isCancelable = false
         targetUserId = arguments?.getString(ARG_TARGET_USER_ID)
         fightId = arguments?.getString(ARG_FIGHT_ID)
     }
@@ -50,6 +50,14 @@ class RatingBottomSheetFragment : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        binding.btnClose.setOnClickListener {
+            skipRating()
+        }
+
+        binding.btnSkipRating.setOnClickListener {
+            skipRating()
+        }
 
         binding.btnSubmitRating.setOnClickListener {
             val rating = binding.ratingBar.rating
@@ -79,6 +87,11 @@ class RatingBottomSheetFragment : BottomSheetDialogFragment() {
                 )
             }
         }
+    }
+
+    private fun skipRating() {
+        onRatingSubmitted?.invoke()
+        dismiss()
     }
 
     override fun onDestroyView() {
