@@ -2,6 +2,8 @@ import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/fire
 import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2";
 
+export { deleteUser, updateUser } from "./users";
+
 admin.initializeApp();
 
 setGlobalOptions({ region: "europe-west1" });

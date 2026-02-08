@@ -1,16 +1,10 @@
 'use client';
 
 import Card from "@/components/card";
+import { Utilisateur } from "@/types/utilisateur";
 
 export interface IInfoSectionProps {
-    utilisateurs: {
-        id: number;
-        nom: string;
-        prenom: string;
-        email: string;
-        role: string;
-        dateInscription: string;
-    }[];
+    utilisateurs: Utilisateur[];
 }
 
 export default function InfoSection({utilisateurs}: IInfoSectionProps) {
@@ -20,12 +14,12 @@ export default function InfoSection({utilisateurs}: IInfoSectionProps) {
                 title="Total des utilisateurs">
                 {utilisateurs.length}
             </Card>
-            <Card title={'Administrateurs'}
+            <Card title={'ADMIN'}
             >
-                {utilisateurs.filter(u => u.role === "Administrateur").length}
+                {utilisateurs.filter(u => u.role === "ADMIN").length}
             </Card>
             <Card title={'Utilisateurs actifs'}>
-                {utilisateurs.filter(u => u.role === "Utilisateur").length}
+                {utilisateurs.filter(u => u.role === "CLIENT").length}
             </Card>
         </div>
     )
