@@ -5,6 +5,8 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AuthError } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -14,7 +16,7 @@ export default function LoginPage() {
     const [resetEmailSent, setResetEmailSent] = useState(false);
     const [showResetPassword, setShowResetPassword] = useState(false);
 
-    const { login, resetPassword } = useAuth();
+    const { login, logout, resetPassword } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -24,7 +26,22 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            await login(email, password);
+            const userCredential = await login(email, password);
+            
+            const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+            const userData = userDoc.data();
+            
+            if (!userDoc.exists() || userData?.role?.toUpperCase() !== "ADMIN") {
+                try {
+                    await logout();
+                } catch (logoutError) {
+                    console.error("Failed to logout non-admin user:", logoutError);
+                }
+                setError("Accès refusé. Seuls les administrateurs peuvent se connecter.");
+                setLoading(false);
+                return;
+            }
+            
             const redirectTo = searchParams.get("redirect") || "/";
             router.push(redirectTo);
         } catch (err) {
