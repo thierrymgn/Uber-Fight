@@ -14,12 +14,12 @@ export default function InfoSection({utilisateurs}: IInfoSectionProps) {
                 title="Total des utilisateurs">
                 {utilisateurs.length}
             </Card>
-            <Card title={'Administrateurs'}
+            <Card title={'ADMIN'}
             >
-                {utilisateurs.filter(u => u.role === "Administrateur").length}
+                {utilisateurs.filter(u => u.role === "ADMIN").length}
             </Card>
             <Card title={'Utilisateurs actifs'}>
-                {utilisateurs.filter(u => u.role === "Utilisateur").length}
+                {utilisateurs.filter(u => u.role === "CLIENT").length}
             </Card>
         </div>
     )
