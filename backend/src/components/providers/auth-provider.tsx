@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
     User,
+    UserCredential,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
@@ -14,7 +15,7 @@ import { auth } from "@/lib/firebase";
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string) => Promise<UserCredential>;
     register: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
@@ -23,7 +24,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
-    login: async () => {},
+    login: async () => { throw new Error("AuthContext not initialized"); },
     register: async () => {},
     logout: async () => {},
     resetPassword: async () => {},
@@ -56,8 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return unsubscribe ?? (() => {});
     }, []);
 
-    const login = async (email: string, password: string) => {
-        await signInWithEmailAndPassword(auth, email, password);
+    const login = async (email: string, password: string): Promise<UserCredential> => {
+        return await signInWithEmailAndPassword(auth, email, password);
     };
 
     const register = async (email: string, password: string) => {
