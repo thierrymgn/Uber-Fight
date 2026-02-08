@@ -8,6 +8,8 @@ data class User(
     val uid: String = "",
     val role: String = "",
     val username: String = "",
+    val firstName: String = "",
+    val lastName: String = "",
     val email: String = "",
     val photoUrl: String = "",
     val rating: Double = 5.0,

@@ -50,4 +50,11 @@
     <string name="ancien_mot_de_passe">Ancien mot de passe</string>
     <string name="nouveau_mot_de_passe">Nouveau mot de passe</string>
     <string name="confirmer_le_nouveau_mot_de_passe">Confirmer le nouveau mot de passe</string>
+    <string name="nom">Nom</string>
+    <string name="prenom">Prénom</string>
+    <string name="enregistrer">Enregistrer</string>
+    <string name="annuler">Annuler</string>
+    <string name="profil_mis_a_jour">Profil mis à jour avec succès</string>
+    <string name="erreur_mise_a_jour_profil">Erreur lors de la mise à jour du profil</string>
+    <string name="veuillez_remplir_tous_les_champs">Veuillez remplir tous les champs</string>
 </resources>

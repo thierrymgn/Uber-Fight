@@ -88,4 +88,53 @@ class UserRepository {
                 onFailure(e)
             }
     }
+
+    fun getCurrentUser(onSuccess: (User?) -> Unit, onFailure: (Exception) -> Unit) {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            db.collection("users").document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val user = document.toObject(User::class.java)
+                        onSuccess(user)
+                    } else {
+                        onSuccess(null)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    onFailure(e)
+                }
+        } else {
+            onSuccess(null)
+        }
+    }
+
+    fun updateUserProfile(
+        firstName: String,
+        lastName: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            val updates = hashMapOf<String, Any>(
+                "firstName" to firstName,
+                "lastName" to lastName
+            )
+
+            db.collection("users").document(currentUser.uid)
+                .update(updates)
+                .addOnSuccessListener {
+                    Log.d("UserRepository", "User profile updated successfully.")
+                    onSuccess()
+                }
+                .addOnFailureListener { e ->
+                    Log.w("UserRepository", "Error updating user profile", e)
+                    onFailure(e)
+                }
+        } else {
+            onFailure(Exception("No authenticated user found."))
+        }
+    }
 }
