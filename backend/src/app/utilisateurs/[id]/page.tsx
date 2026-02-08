@@ -17,7 +17,6 @@ export default function EditUtilisateurPage() {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    // État du formulaire
     const [formData, setFormData] = useState({
         username: "",
         email: "",
@@ -93,7 +92,6 @@ export default function EditUtilisateurPage() {
 
             setSuccessMessage("Utilisateur modifié avec succès !");
 
-            // Mettre à jour l'utilisateur local
             setUtilisateur({
                 ...utilisateur,
                 ...formData

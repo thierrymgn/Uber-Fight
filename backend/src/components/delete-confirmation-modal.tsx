@@ -23,7 +23,6 @@ export default function DeleteConfirmationModal({
     cancelButtonText = "Annuler",
     isDeleting = false,
 }: DeleteConfirmationModalProps) {
-    // Fermer la modal avec la touche Échap
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === "Escape" && isOpen) {
@@ -35,7 +34,6 @@ export default function DeleteConfirmationModal({
         return () => document.removeEventListener("keydown", handleEscape);
     }, [isOpen, onClose]);
 
-    // Empêcher le scroll du body quand la modal est ouverte
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = "hidden";

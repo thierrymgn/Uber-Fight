@@ -9,11 +9,9 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    // Pages publiques qui ne nécessitent pas d'authentification
     const publicPages = ["/login"];
     const isPublicPage = publicPages.includes(pathname);
 
-    // Afficher la sidebar uniquement si l'utilisateur est connecté et pas sur une page publique
     const showSidebar = user && !isPublicPage;
 
     if (loading) {
@@ -27,10 +25,10 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Si l'utilisateur n'est pas connecté et n'est pas sur une page publique, on laisse le children gérer la redirection
     if (!user && !isPublicPage) {
         if (typeof window !== "undefined") {
-            router.push("/login")
+            const redirectPath = encodeURIComponent(pathname || "/");
+            router.push(`/login?redirect=${redirectPath}`);
         }
         return null;
     }
@@ -44,4 +42,3 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
         </div>
     );
 }
-

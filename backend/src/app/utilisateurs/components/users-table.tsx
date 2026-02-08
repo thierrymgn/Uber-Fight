@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Utilisateur } from "@/types/utilisateur";
 import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
 import DeleteConfirmationModal from "@/components/delete-confirmation-modal";
-import { doc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
 
 export interface UsersTableProps {
     utilisateurs: Utilisateur[];
@@ -40,20 +40,24 @@ export default function UsersTable({ utilisateurs, onUserDeleted }: UsersTablePr
         setDeleteError(null);
 
         try {
-            await deleteDoc(doc(db, "users", userToDelete.id));
+            const deleteUserFn = httpsCallable<{ userId: string }, { success: boolean; message: string }>(
+                functions, 
+                "deleteUser"
+            );
+            await deleteUserFn({ userId: userToDelete.id });
 
-            // Appeler le callback pour mettre à jour la liste
             if (onUserDeleted) {
                 onUserDeleted(userToDelete.id);
             }
 
             setUserToDelete(null);
         } catch (error) {
-            console.error("Erreur lors de la suppression:", error);
+            console.log("Erreur lors de la suppression:", {error});
+            
             setDeleteError(
-                error instanceof Error
-                    ? error.message
-                    : "Une erreur est survenue lors de la suppression"
+                typeof error === "object" && error !== null && "message" in error
+                    ? String((error as { message?: unknown }).message)
+                    : String(error)
             );
         } finally {
             setIsDeleting(false);
