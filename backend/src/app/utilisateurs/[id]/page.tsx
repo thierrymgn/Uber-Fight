@@ -7,6 +7,7 @@ import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Utilisateur } from "@/types/utilisateur";
+import { formatDateTime } from "@/lib/utils";
 
 interface UpdateUserResponse {
     success: boolean;
@@ -135,7 +136,7 @@ export default function EditUtilisateurPage() {
         return (
             <div className="p-8">
                 <div className="max-w-3xl mx-auto">
-                    <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="flex items-center justify-center min-h-100">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                             <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
@@ -283,13 +284,7 @@ export default function EditUtilisateurPage() {
                                 </p>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                     <span className="font-medium">Date de création:</span>{" "}
-                                    {new Date(utilisateur.createdAt).toLocaleDateString("fr-FR", {
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
+                                    {formatDateTime(utilisateur.createdAt)}
                                 </p>
                             </div>
                         )}

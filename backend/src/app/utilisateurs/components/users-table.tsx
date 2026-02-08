@@ -7,6 +7,7 @@ import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
 import DeleteConfirmationModal from "@/components/delete-confirmation-modal";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
+import { formatDate } from "@/lib/utils";
 
 export interface UsersTableProps {
     utilisateurs: Utilisateur[];
@@ -104,11 +105,7 @@ export default function UsersTable({ utilisateurs, onUserDeleted }: UsersTablePr
                                 <UserRoleTag role={utilisateur.role}/>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                                {new Date(utilisateur.createdAt).toLocaleDateString("fr-FR", {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                })}
+                                {formatDate(utilisateur.createdAt)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                                 <button
