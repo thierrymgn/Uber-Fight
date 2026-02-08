@@ -2,10 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Utilisateur } from "@/types/utilisateur";
+
+interface UpdateUserResponse {
+    success: boolean;
+    message: string;
+}
+
+interface FormData {
+    username: string;
+    email: string;
+    role: string;
+}
 
 export default function EditUtilisateurPage() {
     const params = useParams();
@@ -17,7 +29,7 @@ export default function EditUtilisateurPage() {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormData>({
         username: "",
         email: "",
         role: "",
@@ -84,13 +96,19 @@ export default function EditUtilisateurPage() {
         setSuccessMessage(null);
 
         try {
-            const docRef = doc(db, "users", utilisateur.id);
-            await updateDoc(docRef, {
+            const updateUserFn = httpsCallable<
+                { userId: string; username: string; email: string; role: string },
+                UpdateUserResponse
+            >(functions, "updateUser");
+
+            const result = await updateUserFn({
+                userId: utilisateur.id,
                 username: formData.username,
+                email: formData.email,
                 role: formData.role,
             });
 
-            setSuccessMessage("Utilisateur modifié avec succès !");
+            setSuccessMessage(result.data.message);
 
             setUtilisateur({
                 ...utilisateur,
@@ -98,8 +116,12 @@ export default function EditUtilisateurPage() {
             });
         } catch (err) {
             console.error("Erreur lors de la modification:", err);
-            const errorMessage = err instanceof Error ? err.message : "Erreur lors de la modification";
-            setError(errorMessage);
+            
+            setError(
+                typeof err === "object" && err !== null && "message" in err
+                    ? String((err as { message?: unknown }).message)
+                    : String(err)
+            );
         } finally {
             setSaving(false);
         }
@@ -247,7 +269,7 @@ export default function EditUtilisateurPage() {
                                 required
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                             >
-                                <option value="REQUESTER">Requester</option>
+                                <option value="CLIENT">Client</option>
                                 <option value="FIGHTER">Fighter</option>
                                 <option value="ADMIN">Admin</option>
                             </select>
