@@ -5,7 +5,7 @@ import InfoSection from "@/app/utilisateurs/components/info-section";
 import { collection, getDocs } from "@firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/auth-provider";
-import { Utilisateur } from "@/types/utilisateur";
+import { Utilisateur, parseUtilisateur, isValidUtilisateur } from "@/types/utilisateur";
 import UsersTable from "@/app/utilisateurs/components/users-table";
 
 export default function UtilisateursPage() {
@@ -27,10 +27,9 @@ export default function UtilisateursPage() {
             try {
                 setLoading(true);
                 const snapshot = await getDocs(collection(db, "users"));
-                const users = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })) as Utilisateur[];
+                const users = snapshot.docs
+                    .filter(doc => isValidUtilisateur(doc.data()))
+                    .map(doc => parseUtilisateur(doc.id, doc.data()));
 
                 setUtilisateurs(users);
                 setError(null);
