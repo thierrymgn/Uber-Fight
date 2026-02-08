@@ -2,20 +2,21 @@
 
 import { useState, FormEvent } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { AuthError } from "firebase/auth";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [isRegister, setIsRegister] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [resetEmailSent, setResetEmailSent] = useState(false);
     const [showResetPassword, setShowResetPassword] = useState(false);
 
-    const { login, register, resetPassword } = useAuth();
+    const { login, resetPassword } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -23,21 +24,15 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            if (isRegister) {
-                await register(email, password);
-            } else {
-                await login(email, password);
-            }
-            router.push("/");
-        } catch (err: any) {
+            await login(email, password);
+            const redirectTo = searchParams.get("redirect") || "/";
+            router.push(redirectTo);
+        } catch (err) {
+            const authError = err as AuthError;
             setError(
-                err.code === "auth/invalid-credential"
+                authError.code === "auth/invalid-credential"
                     ? "Email ou mot de passe incorrect"
-                    : err.code === "auth/email-already-in-use"
-                    ? "Cet email est déjà utilisé"
-                    : err.code === "auth/weak-password"
-                    ? "Le mot de passe doit contenir au moins 6 caractères"
-                    : err.code === "auth/invalid-email"
+                    : authError.code === "auth/invalid-email"
                     ? "Email invalide"
                     : "Une erreur est survenue. Veuillez réessayer."
             );
@@ -54,11 +49,12 @@ export default function LoginPage() {
         try {
             await resetPassword(email);
             setResetEmailSent(true);
-        } catch (err: any) {
+        } catch (err) {
+            const authError = err as AuthError;
             setError(
-                err.code === "auth/invalid-email"
+                authError.code === "auth/invalid-email"
                     ? "Email invalide"
-                    : err.code === "auth/user-not-found"
+                    : authError.code === "auth/user-not-found"
                     ? "Aucun utilisateur trouvé avec cet email"
                     : "Une erreur est survenue. Veuillez réessayer."
             );
@@ -163,7 +159,7 @@ export default function LoginPage() {
                     />
                 </div>
                 <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
-                    {isRegister ? "Créer un compte" : "Connexion"}
+                    Connexion Admin
                 </h2>
 
                 <form onSubmit={handleSubmit}>
@@ -215,41 +211,20 @@ export default function LoginPage() {
                         disabled={loading}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading
-                            ? "Chargement..."
-                            : isRegister
-                            ? "Créer un compte"
-                            : "Se connecter"}
+                        {loading ? "Chargement..." : "Se connecter"}
                     </button>
                 </form>
 
-                {!isRegister && (
-                    <div className="mt-4 text-center">
-                        <button
-                            onClick={() => {
-                                setShowResetPassword(true);
-                                setError("");
-                            }}
-                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                            Mot de passe oublié ?
-                        </button>
-                    </div>
-                )}
-
-                <div className="mt-6 text-center">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {isRegister ? "Vous avez déjà un compte ?" : "Vous n'avez pas de compte ?"}
-                        <button
-                            onClick={() => {
-                                setIsRegister(!isRegister);
-                                setError("");
-                            }}
-                            className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-                        >
-                            {isRegister ? "Se connecter" : "Créer un compte"}
-                        </button>
-                    </p>
+                <div className="mt-4 text-center">
+                    <button
+                        onClick={() => {
+                            setShowResetPassword(true);
+                            setError("");
+                        }}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                        Mot de passe oublié ?
+                    </button>
                 </div>
             </div>
         </div>
