@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import Link from "next/link";
 
 export default function Home() {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ export default function Home() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 w-full max-w-2xl">
-            <a
+            <Link
               href="/utilisateurs"
               className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow"
             >
@@ -32,10 +33,10 @@ export default function Home() {
               <p className="text-gray-600 dark:text-gray-400">
                 Gérez tous les utilisateurs de l&#39;application
               </p>
-            </a>
+            </Link>
 
-            <a
-              href="/statistiques"
+            <Link
+              href="/dashboard"
               className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow"
             >
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -44,9 +45,9 @@ export default function Home() {
               <p className="text-gray-600 dark:text-gray-400">
                 Consultez les statistiques et analyses
               </p>
-            </a>
+            </Link>
 
-            <a
+            {/* <Link
               href="/parametres"
               className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow"
             >
@@ -56,19 +57,7 @@ export default function Home() {
               <p className="text-gray-600 dark:text-gray-400">
                 Configurez les paramètres de l&#39;application
               </p>
-            </a>
-
-            <a
-              href="/test-icons"
-              className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow"
-            >
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                🎨 Test Icônes
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Voir toutes les icônes disponibles
-              </p>
-            </a>
+            </Link> */}
           </div>
         </div>
       </div>
