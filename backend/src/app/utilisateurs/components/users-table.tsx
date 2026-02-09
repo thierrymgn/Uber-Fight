@@ -7,7 +7,7 @@ import UserRoleTag from "@/app/utilisateurs/components/user-role-tag";
 import DeleteConfirmationModal from "@/components/delete-confirmation-modal";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/composables";
 
 export interface UsersTableProps {
     utilisateurs: Utilisateur[];

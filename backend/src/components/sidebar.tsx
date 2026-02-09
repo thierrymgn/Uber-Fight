@@ -12,8 +12,8 @@ export default function Sidebar() {
 
     const buttons = [
         {href: "/", label: "Accueil", icon: <HomeIcon />},
+        {href: "/dashboard", label: "Dashboard", icon: <ChartIcon />},
         {href: "/utilisateurs", label: "Utilisateurs", icon: <UsersIcon />},
-        {href: "/statistiques", label: "Statistiques", icon: <ChartIcon />},
         {href: "/parametres", label: "Paramètres", icon: <HomeIcon />},
     ];
 
