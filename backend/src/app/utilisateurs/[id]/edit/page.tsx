@@ -6,8 +6,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/auth-provider";
-import { Utilisateur } from "@/types/utilisateur";
-import { formatDateTime } from "@/lib/utils";
+import { User } from "@/types/user";
+import { formatDateTime } from "@/lib/composables";
 
 interface UpdateUserResponse {
     success: boolean;
@@ -20,11 +20,11 @@ interface FormData {
     role: string;
 }
 
-export default function EditUtilisateurPage() {
+export default function EditUserPage() {
     const params = useParams();
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(null);
+    const [userData, setUserData] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export default function EditUtilisateurPage() {
             return;
         }
 
-        const fetchUtilisateur = async () => {
+        const fetchUsers = async () => {
             try {
                 setLoading(true);
                 const userId = params.id as string;
@@ -55,9 +55,9 @@ export default function EditUtilisateurPage() {
                     const userData = {
                         id: docSnap.id,
                         ...docSnap.data()
-                    } as Utilisateur;
+                    } as User;
 
-                    setUtilisateur(userData);
+                    setUserData(userData);
                     setFormData({
                         username: userData.username,
                         email: userData.email,
@@ -76,7 +76,7 @@ export default function EditUtilisateurPage() {
             }
         };
 
-        fetchUtilisateur();
+        fetchUsers();
     }, [params.id, user, authLoading, router]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -90,7 +90,7 @@ export default function EditUtilisateurPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!utilisateur) return;
+        if (!userData) return;
 
         setSaving(true);
         setError(null);
@@ -103,7 +103,7 @@ export default function EditUtilisateurPage() {
             >(functions, "updateUser");
 
             const result = await updateUserFn({
-                userId: utilisateur.id,
+                userId: userData.id,
                 username: formData.username,
                 email: formData.email,
                 role: formData.role,
@@ -111,8 +111,8 @@ export default function EditUtilisateurPage() {
 
             setSuccessMessage(result.data.message);
 
-            setUtilisateur({
-                ...utilisateur,
+            setUserData({
+                ...userData,
                 ...formData
             });
         } catch (err) {
@@ -147,7 +147,7 @@ export default function EditUtilisateurPage() {
         );
     }
 
-    if (error && !utilisateur) {
+    if (error && !userData) {
         return (
             <div className="p-8">
                 <div className="max-w-3xl mx-auto">
@@ -206,7 +206,7 @@ export default function EditUtilisateurPage() {
                     </div>
                 )}
 
-                {error && utilisateur && (
+                {error && userData && (
                     <div className="mb-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded">
                         <p className="font-bold">Erreur</p>
                         <p>{error}</p>
@@ -277,14 +277,14 @@ export default function EditUtilisateurPage() {
                         </div>
 
                         {/* Info création */}
-                        {utilisateur && (
+                        {userData && (
                             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    <span className="font-medium">ID:</span> {utilisateur.id}
+                                    <span className="font-medium">ID:</span> {userData.id}
                                 </p>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                     <span className="font-medium">Date de création:</span>{" "}
-                                    {formatDateTime(utilisateur.createdAt)}
+                                    {formatDateTime(userData.createdAt)}
                                 </p>
                             </div>
                         )}

@@ -1,18 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import InfoSection from "@/app/utilisateurs/components/info-section";
 import { collection, getDocs } from "@firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/auth-provider";
-import { Utilisateur, parseUtilisateur, isValidUtilisateur } from "@/types/utilisateur";
+import { User, parseUser, isValidUser } from "@/types/user";
 import UsersTable from "@/app/utilisateurs/components/users-table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, Search, UserPlus, RefreshCw } from "lucide-react";
 
 export default function UtilisateursPage() {
     const { user, loading: authLoading } = useAuth();
-    const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [roleFilter, setRoleFilter] = useState<string>("ALL");
+
+    const fetchUsers = useCallback(async () => {
+        try {
+            setLoading(true);
+            const snapshot = await getDocs(collection(db, "users"));
+            const users = snapshot.docs
+                .filter(doc => isValidUser(doc.data()))
+                .map(doc => parseUser(doc.id, doc.data()));
+
+            setUsers(users);
+            setError(null);
+        } catch (err) {
+            console.error("Erreur lors de la récupération des utilisateurs:", err);
+            const errorMessage = err instanceof Error ? err.message : "Erreur lors de la récupération des utilisateurs";
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         if (authLoading) return;
@@ -23,82 +49,145 @@ export default function UtilisateursPage() {
             return;
         }
 
-        const fetchUtilisateurs = async () => {
-            try {
-                setLoading(true);
-                const snapshot = await getDocs(collection(db, "users"));
-                const users = snapshot.docs
-                    .filter(doc => isValidUtilisateur(doc.data()))
-                    .map(doc => parseUtilisateur(doc.id, doc.data()));
+        fetchUsers();
+    }, [user, authLoading, fetchUsers]);
 
-                setUtilisateurs(users);
-                setError(null);
-            } catch (err) {
-                console.error("Erreur lors de la récupération des utilisateurs:", err);
-                const errorMessage = err instanceof Error ? err.message : "Erreur lors de la récupération des utilisateurs";
-                setError(errorMessage);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchUtilisateurs();
-    }, [user, authLoading]);
+    const filteredUsers = useMemo(() => {
+        return users.filter((u) => {
+            const matchesSearch =
+                u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                u.email.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
+            return matchesSearch && matchesRole;
+        });
+    }, [users, searchQuery, roleFilter]);
 
     const handleUserDeleted = (userId: string) => {
-        setUtilisateurs(prevUtilisateurs =>
-            prevUtilisateurs.filter(u => u.id !== userId)
+        setUsers(prevUsers =>
+            prevUsers.filter(u => u.id !== userId)
         );
     };
 
     if (authLoading || loading) {
         return (
-            <div className="p-8">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-center min-h-100">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement des utilisateurs...</p>
-                        </div>
+            <div className="p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <Skeleton className="h-8 w-64 mb-2" />
+                        <Skeleton className="h-4 w-96" />
                     </div>
+                    <Skeleton className="h-10 w-40" />
                 </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <Card key={i}>
+                            <CardContent className="p-6">
+                                <Skeleton className="h-4 w-24 mb-2" />
+                                <Skeleton className="h-8 w-16" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="space-y-4">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <Skeleton key={i} className="h-12 w-full" />
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="p-8">
-                <div className="max-w-7xl mx-auto">
-                    <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded">
-                        <p className="font-bold">Erreur</p>
-                        <p>{error}</p>
-                    </div>
-                </div>
+            <div className="p-6">
+                <Card className="border-destructive">
+                    <CardContent className="p-6">
+                        <div className="flex items-center gap-3">
+                            <AlertCircle className="h-5 w-5 text-destructive" />
+                            <div>
+                                <p className="font-semibold text-destructive">Erreur</p>
+                                <p className="text-sm text-muted-foreground">{error}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         );
     }
 
     return (
-        <div className="p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="p-6 space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">
                         Gestion des utilisateurs
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        Liste complète de tous les utilisateurs inscrits
-                        {utilisateurs.length === 0 && " (données de démonstration)"}
+                    <p className="text-muted-foreground">
+                        {filteredUsers.length} user{filteredUsers.length > 1 ? "s" : ""} 
+                        {searchQuery || roleFilter !== "ALL" ? " trouvé(s)" : " au total"}
                     </p>
                 </div>
-
-                <InfoSection utilisateurs={utilisateurs}/>
-
-                <UsersTable
-                    utilisateurs={utilisateurs}
-                    onUserDeleted={handleUserDeleted}
-                />
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchUsers}
+                        disabled={loading}
+                    >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                        Actualiser
+                    </Button>
+                    <Button size="sm">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Ajouter
+                    </Button>
+                </div>
             </div>
+
+            {/* Stats Cards */}
+            <InfoSection users={users} />
+
+            {/* Filtres */}
+            <Card>
+                <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Rechercher par nom ou email..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            {["ALL", "ADMIN", "FIGHTER", "CLIENT"].map((role) => (
+                                <Button
+                                    key={role}
+                                    variant={roleFilter === role ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setRoleFilter(role)}
+                                >
+                                    {role === "ALL" ? "Tous" : role}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Table */}
+            <UsersTable
+                users={filteredUsers}
+                onUserDeleted={handleUserDeleted}
+            />
         </div>
     );
 }
