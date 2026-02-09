@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminFirestore } from "@/lib/firebase-admin";
+import { verifyAuth } from "@/lib/auth-admin";
 import type {
   DashboardStats,
   UserDistribution,
@@ -123,12 +124,17 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
       }
     }
 
+    const createdAtDate =
+      data.createdAt?.toDate?.() ??
+      doc.createTime?.toDate?.() ??
+      null;
+
     fights.push({
       id: doc.id,
       clientName: data.clientName || "Client inconnu",
       fighterName: data.fighterName || "Bagarreur inconnu",
       status: (data.status?.toUpperCase() || "PENDING") as FightStatus,
-      createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      createdAt: createdAtDate ? createdAtDate.toISOString() : null,
       location: locationString,
     });
   }
@@ -136,7 +142,16 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
   return fights;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authResult = await verifyAuth(request, ["ADMIN"]);
+
+  if (!authResult.success) {
+    return NextResponse.json(
+      { error: authResult.error },
+      { status: authResult.status }
+    );
+  }
+
   try {
     const [userDistribution, fightStatusDistribution, averageRating, recentFights] =
       await Promise.all([

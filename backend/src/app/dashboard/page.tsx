@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Users, Swords, Star, TrendingUp } from "lucide-react";
 import {
   Card,
@@ -33,6 +33,7 @@ import type {
   FightStatus,
 } from "@/types/dashboard";
 import { FIGHT_STATUS_LABELS, CHART_COLORS } from "@/types/dashboard";
+import { useAuth } from "@/components/providers/auth-provider";
 
 const userChartConfig: ChartConfig = {
   clients: {
@@ -325,34 +326,56 @@ function TableSkeleton() {
 }
 
 function useDashboardStats() {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await fetch("/api/dashboard/stats");
-
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-
-        const stats: DashboardStats = await response.json();
-        setData(stats);
-      } catch (err) {
-        console.error("Erreur lors du chargement des stats:", err);
-        setError(err instanceof Error ? err.message : "Erreur inconnue");
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchStats = useCallback(async () => {
+    if (!user) {
+      setError("Vous devez être connecté pour accéder au dashboard");
+      setIsLoading(false);
+      return;
     }
 
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const idToken = await user.getIdToken();
+
+      const response = await fetch("/api/dashboard/stats", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      if (response.status === 401) {
+        throw new Error("Session expirée - Veuillez vous reconnecter");
+      }
+
+      if (response.status === 403) {
+        throw new Error("Accès non autorisé - Droits administrateur requis");
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
+      }
+
+      const stats: DashboardStats = await response.json();
+      setData(stats);
+    } catch (err) {
+      console.error("Erreur lors du chargement des stats:", err);
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
     fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   return { data, isLoading, error };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import InfoSection from "@/app/utilisateurs/components/info-section";
 import { collection, getDocs } from "@firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -21,7 +21,7 @@ export default function UtilisateursPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("ALL");
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
         try {
             setLoading(true);
             const snapshot = await getDocs(collection(db, "users"));
@@ -38,7 +38,7 @@ export default function UtilisateursPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (authLoading) return;
@@ -50,7 +50,7 @@ export default function UtilisateursPage() {
         }
 
         fetchUsers();
-    }, [user, authLoading]);
+    }, [user, authLoading, fetchUsers]);
 
     const filteredUsers = useMemo(() => {
         return users.filter((u) => {
