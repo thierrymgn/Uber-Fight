@@ -1,26 +1,71 @@
-'use client';
+"use client";
 
-import Card from "@/components/card";
-import { Utilisateur } from "@/types/utilisateur";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { User } from "@/types/user";
+import { Users, Shield, Swords, UserCheck } from "lucide-react";
 
 export interface IInfoSectionProps {
-    utilisateurs: Utilisateur[];
+    users: User[];
 }
 
-export default function InfoSection({utilisateurs}: IInfoSectionProps) {
+interface StatCardProps {
+    title: string;
+    value: number;
+    icon: React.ReactNode;
+    description?: string;
+    className?: string;
+}
+
+function StatCard({ title, value, icon, description, className }: StatCardProps) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card
-                title="Total des utilisateurs">
-                {utilisateurs.length}
-            </Card>
-            <Card title={'ADMIN'}
-            >
-                {utilisateurs.filter(u => u.role === "ADMIN").length}
-            </Card>
-            <Card title={'Utilisateurs actifs'}>
-                {utilisateurs.filter(u => u.role === "CLIENT").length}
-            </Card>
+        <Card className={className}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {title}
+                </CardTitle>
+                <div className="text-muted-foreground">{icon}</div>
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                {description && (
+                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+export default function InfoSection({ users }: IInfoSectionProps) {
+    const totalUsers = users.length;
+    const admins = users.filter((u) => u.role === "ADMIN").length;
+    const fighters = users.filter((u) => u.role === "FIGHTER").length;
+    const clients = users.filter((u) => u.role === "CLIENT").length;
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+                title="Total Utilisateurs"
+                value={totalUsers}
+                icon={<Users className="h-5 w-5" />}
+                description="Tous les comptes"
+            />
+            <StatCard
+                title="Administrateurs"
+                value={admins}
+                icon={<Shield className="h-5 w-5" />}
+                description="Accès complet"
+            />
+            <StatCard
+                title="Bagarreurs"
+                value={fighters}
+                icon={<Swords className="h-5 w-5" />}
+                description="Prestataires actifs"
+            />
+            <StatCard
+                title="Clients"
+                value={clients}
+                icon={<UserCheck className="h-5 w-5" />}
+                description="Utilisateurs finaux"
+            />
         </div>
-    )
+    );
 }

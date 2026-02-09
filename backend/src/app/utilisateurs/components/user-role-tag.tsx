@@ -1,21 +1,43 @@
+import { Badge } from "@/components/ui/badge";
+import { Shield, Swords, User } from "lucide-react";
+
 export interface UserRoleTagProps {
     role: string;
 }
 
-export default function UserRoleTag(
-    {role}: UserRoleTagProps
-) {
+const roleConfig: Record<string, { 
+    label: string; 
+    variant: "default" | "secondary" | "destructive" | "outline";
+    icon: React.ReactNode;
+}> = {
+    ADMIN: {
+        label: "Admin",
+        variant: "default",
+        icon: <Shield className="h-3 w-3" />,
+    },
+    FIGHTER: {
+        label: "Bagarreur",
+        variant: "destructive",
+        icon: <Swords className="h-3 w-3" />,
+    },
+    CLIENT: {
+        label: "Client",
+        variant: "secondary",
+        icon: <User className="h-3 w-3" />,
+    },
+};
+
+export default function UserRoleTag({ role }: UserRoleTagProps) {
+    const config = roleConfig[role] || {
+        label: role,
+        variant: "outline" as const,
+        icon: <User className="h-3 w-3" />,
+    };
+
     return (
-        <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                role === "ADMIN"
-                    ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                    : role === "FIGHTER"
-                        ? "bg-blue-100 text-red-800 dark:bg-red-900 dark:text-blue-200"
-                        : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-            }`}
-        >
-                        {role}
-        </span>
-    )
+        <Badge variant={config.variant} className="gap-1">
+            {config.icon}
+            {config.label}
+        </Badge>
+    );
 }

@@ -34,10 +34,6 @@ import type {
 } from "@/types/dashboard";
 import { FIGHT_STATUS_LABELS, CHART_COLORS } from "@/types/dashboard";
 
-/**
- * Configuration pour le graphique de distribution des utilisateurs
- * IMPORTANT: Les clés doivent correspondre aux valeurs "name" dans les données
- */
 const userChartConfig: ChartConfig = {
   clients: {
     label: "Clients",
@@ -49,9 +45,6 @@ const userChartConfig: ChartConfig = {
   },
 } satisfies ChartConfig;
 
-/**
- * Configuration pour le graphique des statuts de combats
- */
 const fightChartConfig: ChartConfig = {
   completed: {
     label: "Terminés",

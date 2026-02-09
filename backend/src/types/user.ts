@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 import { DocumentData } from "firebase/firestore";
 
-export interface Utilisateur {
+export interface User {
     id: string;
     username: string;
     email: string;
@@ -9,7 +9,7 @@ export interface Utilisateur {
     createdAt: Timestamp | string;
 }
 
-export function parseUtilisateur(id: string, data: DocumentData): Utilisateur {
+export function parseUser(id: string, data: DocumentData): User {
     return {
         id,
         username: data.username ?? "Utilisateur inconnu",
@@ -19,7 +19,7 @@ export function parseUtilisateur(id: string, data: DocumentData): Utilisateur {
     };
 }
 
-export function isValidUtilisateur(data: DocumentData): boolean {
+export function isValidUser(data: DocumentData): boolean {
     return typeof data.email === "string" && data.email.length > 0;
 }
 

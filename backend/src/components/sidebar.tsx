@@ -9,11 +9,9 @@ import {
   LayoutDashboard,
   Users,
   Home,
-  Settings,
   LogOut,
   ChevronLeft,
   Swords,
-  Bell,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -106,7 +104,6 @@ export default function Sidebar() {
     }
   };
 
-  // Générer les initiales de l'utilisateur
   const getUserInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
   };
