@@ -7,7 +7,7 @@ import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Utilisateur } from "@/types/utilisateur";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/composables";
 
 interface UpdateUserResponse {
     success: boolean;
