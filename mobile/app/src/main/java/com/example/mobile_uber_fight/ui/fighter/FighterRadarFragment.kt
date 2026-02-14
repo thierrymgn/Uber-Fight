@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.FragmentFighterRadarBinding
+import com.example.mobile_uber_fight.logger.GrafanaLogger
 import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.repositories.FightRepository
 import com.example.mobile_uber_fight.repositories.UserRepository
@@ -58,7 +59,10 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
+            GrafanaLogger.logInfo("Location permission granted by fighter")
             startLocationUpdates()
+        } else {
+            GrafanaLogger.logWarn("Location permission denied by fighter")
         }
     }
 
@@ -73,6 +77,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        GrafanaLogger.logDebug("FighterRadarFragment: onViewCreated")
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         setupLocationCallback()
@@ -85,6 +90,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun listenToMyActiveFight() {
+        GrafanaLogger.logDebug("Listening to fighter active mission")
         fightRepository.listenToMyActiveFight(
             onFightFound = { fight ->
                 if (_binding == null) return@listenToMyActiveFight
@@ -93,11 +99,15 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 currentActiveFight = fight
                 
                 if (fight != null) {
+                    GrafanaLogger.logInfo("Active mission detected for fighter", mapOf("fightId" to fight.id))
                     binding?.tvEmpty?.visibility = View.GONE
                     if (::googleMap.isInitialized) {
                         drawRouteToFight()
                     }
                 } else {
+                    if (wasInMission) {
+                        GrafanaLogger.logInfo("Fighter mission ended or cancelled")
+                    }
                     binding?.cvTripInfo?.visibility = View.GONE
                     polyline?.remove()
                     polyline = null
@@ -107,7 +117,9 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                     }
                 }
             },
-            onFailure = { /* Handle error */ }
+            onFailure = { e ->
+                GrafanaLogger.logError("Listen active fight failed for fighter", e)
+            }
         )
     }
 
@@ -117,6 +129,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     override fun onMapReady(map: GoogleMap) {
+        GrafanaLogger.logInfo("Google Map ready for fighter radar")
         googleMap = map
         
         googleMap.uiSettings.isZoomControlsEnabled = true
@@ -178,6 +191,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         googleMap.setOnMarkerClickListener { marker ->
             val fight = marker.tag as? Fight
             if (fight != null) {
+                GrafanaLogger.logInfo("Mission marker clicked", mapOf("fightId" to fight.id))
                 showMissionDetails(fight)
             }
             false
@@ -201,6 +215,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                     }
 
                     if (isFirstLocationUpdate && _binding != null) {
+                        GrafanaLogger.logInfo("Fighter first location fix", mapOf("lat" to location.latitude, "lng" to location.longitude))
                         val userLatLng = LatLng(location.latitude, location.longitude)
                         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 14f))
                         isFirstLocationUpdate = false
@@ -225,6 +240,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
             
             binding?.btnAcceptMission?.setOnClickListener {
                 binding?.btnAcceptMission?.isEnabled = false
+                GrafanaLogger.logInfo("Fighter button clicked: Accept Mission", mapOf("fightId" to fight.id))
                 acceptFightOffer(fight)
             }
         }
@@ -233,18 +249,21 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun listenForPendingFights() {
+        GrafanaLogger.logDebug("Listening to pending missions (Radar)")
         setLoadingState(true)
         fightRepository.listenToPendingFights(
             onUpdate = { fights ->
                 if (isAdded && _binding != null) {
+                    GrafanaLogger.logDebug("Radar updated with available missions", mapOf("count" to fights.size))
                     setLoadingState(false)
                     updateMapMarkers(fights)
                 }
             },
-            onFailure = { exception ->
+            onFailure = { e ->
                 if (isAdded && _binding != null) {
+                    GrafanaLogger.logError("Listen pending missions failed", e)
                     setLoadingState(false)
-                    Toast.makeText(requireContext(), "Erreur: ${exception.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         )
@@ -284,16 +303,18 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
         fightRepository.acceptFight(fight.id,
             onSuccess = {
                 if (isAdded && _binding != null) {
+                    GrafanaLogger.logInfo("Mission accepted success", mapOf("fightId" to fight.id))
                     setLoadingState(false)
                     bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
                     Toast.makeText(requireContext(), "Mission acceptée !", Toast.LENGTH_LONG).show()
                 }
             },
-            onFailure = { exception ->
+            onFailure = { e ->
                 if (isAdded && _binding != null) {
+                    GrafanaLogger.logError("Mission accept failed", e, mapOf("fightId" to fight.id))
                     setLoadingState(false)
                     binding?.btnAcceptMission?.isEnabled = true
-                    Toast.makeText(requireContext(), "Erreur: ${exception.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         )
@@ -338,11 +359,15 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
                 draw(Canvas(bitmap))
                 BitmapDescriptorFactory.fromBitmap(bitmap)
             }
-        } catch (e: Exception) { null }
+        } catch (e: Exception) { 
+            GrafanaLogger.logError("Vector icon conversion failed", e)
+            null 
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        GrafanaLogger.logDebug("FighterRadarFragment: onResume")
         if (ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -354,11 +379,13 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
 
     override fun onPause() {
         super.onPause()
+        GrafanaLogger.logDebug("FighterRadarFragment: onPause")
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        GrafanaLogger.logDebug("FighterRadarFragment: onDestroyView")
         _binding = null
     }
 }

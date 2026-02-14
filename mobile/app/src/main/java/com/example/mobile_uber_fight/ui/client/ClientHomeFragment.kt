@@ -33,6 +33,7 @@ import com.example.mobile_uber_fight.repositories.FightRepository
 import com.example.mobile_uber_fight.repositories.UserRepository
 import com.example.mobile_uber_fight.ui.shared.RatingBottomSheetFragment
 import com.example.mobile_uber_fight.utils.DirectionsService
+import com.example.mobile_uber_fight.logger.GrafanaLogger
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -107,8 +108,13 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) startLocationUpdates()
-        else Toast.makeText(requireContext(), "Permission refusée", Toast.LENGTH_SHORT).show()
+        if (isGranted) {
+            GrafanaLogger.logInfo("Location permission granted by client")
+            startLocationUpdates()
+        } else {
+            GrafanaLogger.logWarn("Location permission denied by client")
+            Toast.makeText(requireContext(), "Permission refusée", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -118,7 +124,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+        GrafanaLogger.logDebug("ClientHomeFragment: onViewCreated")
         initPlaces()
         
         val mapFragment = childFragmentManager.findFragmentById(binding!!.map.id) as SupportMapFragment
@@ -130,21 +136,34 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun initPlaces() {
-        if (!Places.isInitialized()) {
-            Places.initialize(requireContext(), BuildConfig.MAPS_API_KEY)
+        try {
+            if (!Places.isInitialized()) {
+                Places.initialize(requireContext(), BuildConfig.MAPS_API_KEY)
+            }
+            placesClient = Places.createClient(requireContext())
+            placesAdapter = PlacesAdapter(requireContext(), placesClient)
+            binding?.etAddress?.setAdapter(placesAdapter)
+        } catch (e: Exception) {
+            GrafanaLogger.logError("Places initialization failed", e)
         }
-        placesClient = Places.createClient(requireContext())
-        placesAdapter = PlacesAdapter(requireContext(), placesClient)
-        binding?.etAddress?.setAdapter(placesAdapter)
     }
 
     private fun listenToCurrentRequest() {
         val uid = currentUserId ?: return
+        GrafanaLogger.logDebug("Listening to current fight request", mapOf("userId" to uid))
         fightRepository.listenToCurrentRequest(uid) { fight ->
             if (_binding == null) return@listenToCurrentRequest
             
             if (currentFight?.status == "IN_PROGRESS" && fight == null) {
+                GrafanaLogger.logInfo("Fight completed, opening rating", mapOf("fightId" to currentFight?.id.toString()))
                 openRatingAndReset(currentFight!!)
+            }
+
+            if (currentFight?.status != fight?.status) {
+                GrafanaLogger.logInfo("Fight status transition", mapOf(
+                    "old" to currentFight?.status.toString(),
+                    "new" to fight?.status.toString()
+                ))
             }
 
             currentFight = fight
@@ -163,6 +182,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         if (!::googleMap.isInitialized) return
         if (fighterLocationListener != null) return
 
+        GrafanaLogger.logInfo("Starting live tracking of fighter", mapOf("fighterId" to fighterId))
         googleMap.clear()
 
         fighterLocationListener = userRepository.listenToUserLocation(fighterId) { geoPoint ->
@@ -180,6 +200,9 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun stopTrackingFighter() {
+        if (fighterLocationListener != null) {
+            GrafanaLogger.logDebug("Stopping fighter live tracking")
+        }
         fighterLocationListener?.remove()
         fighterLocationListener = null
         fighterMarker?.remove()
@@ -270,11 +293,15 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     private fun startChrono() {
         if (secondsElapsed == 0) {
+            GrafanaLogger.logDebug("Starting fight chronometer")
             chronoHandler.post(chronoRunnable)
         }
     }
 
     private fun stopChrono() {
+        if (secondsElapsed > 0) {
+            GrafanaLogger.logDebug("Stopping chronometer", mapOf("durationSeconds" to secondsElapsed))
+        }
         chronoHandler.removeCallbacks(chronoRunnable)
         secondsElapsed = 0
         binding?.tvChrono?.text = "00:00"
@@ -283,7 +310,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun openRatingAndReset(fight: Fight) {
         fight.fighterId?.let { fighterId ->
             val ratingFragment = RatingBottomSheetFragment.newInstance(fighterId, fight.id) {
-                // Reset UI logic if needed
+                GrafanaLogger.logDebug("Rating fragment closed")
             }
             ratingFragment.show(childFragmentManager, "Rating")
         }
@@ -297,6 +324,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     override fun onMapReady(map: GoogleMap) {
+        GrafanaLogger.logInfo("Google Map ready for client")
         googleMap = map
         
         googleMap.uiSettings.isZoomControlsEnabled = true
@@ -314,6 +342,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         checkLocationPermission()
         userRepository.listenToNearbyFighters { fighters ->
             if (_binding == null) return@listenToNearbyFighters
+            GrafanaLogger.logDebug("Nearby fighters updated", mapOf("count" to fighters.size))
             this.fightersList = fighters
             displayFightersOnMap()
         }
@@ -349,7 +378,10 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 draw(Canvas(bitmap))
                 BitmapDescriptorFactory.fromBitmap(bitmap)
             }
-        } catch (e: Exception) { null }
+        } catch (e: Exception) { 
+            GrafanaLogger.logError("Marker icon creation failed", e)
+            null 
+        }
     }
 
     private fun setupLocationCallback() {
@@ -365,6 +397,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                     }
                     
                     if (isFirstLocationUpdate && ::googleMap.isInitialized) {
+                        GrafanaLogger.logInfo("First location fix received", mapOf("lat" to location.latitude, "lng" to location.longitude))
                         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 15f))
                         isFirstLocationUpdate = false
                     }
@@ -379,9 +412,11 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 val geocoder = Geocoder(requireContext(), Locale.getDefault())
                 val addresses = withContext(Dispatchers.IO) { geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1) }
                 if (_binding != null && !isSearchingAddress) {
-                    binding?.etAddress?.setText(addresses?.firstOrNull()?.getAddressLine(0) ?: "Position sur la carte")
+                    val firstAddr = addresses?.firstOrNull()?.getAddressLine(0) ?: "Position sur la carte"
+                    binding?.etAddress?.setText(firstAddr)
                 }
             } catch (e: Exception) { 
+                GrafanaLogger.logWarn("Reverse geocoding failed", mapOf("lat" to latLng.latitude, "lng" to latLng.longitude))
                 if (_binding != null && !isSearchingAddress) {
                     binding?.etAddress?.setText("Position sur la carte") 
                 }
@@ -399,11 +434,13 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
         binding?.etAddress?.setOnItemClickListener { _, _, position, _ ->
             val placeId = placesAdapter.getPlaceId(position)
+            GrafanaLogger.logInfo("Place selected from autocomplete", mapOf("placeId" to placeId))
             fetchPlaceDetails(placeId)
         }
 
         binding?.etAddress?.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                GrafanaLogger.logInfo("Manual address search triggered", mapOf("query" to v.text.toString()))
                 searchAddress(v.text.toString())
                 hideKeyboard(v)
                 true
@@ -420,14 +457,15 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             if (_binding == null) return@addOnSuccessListener
             val place = response.place
             place.location?.let { latLng ->
+                GrafanaLogger.logInfo("Place coordinates fetched", mapOf("name" to place.displayName.toString(), "lat" to latLng.latitude))
                 if (::googleMap.isInitialized) {
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
                 }
                 hideKeyboard(binding!!.etAddress)
             }
             isSearchingAddress = false
-        }.addOnFailureListener {
-            if (_binding == null) return@addOnFailureListener
+        }.addOnFailureListener { e ->
+            GrafanaLogger.logError("Fetch place details failed", e, mapOf("placeId" to placeId))
             isSearchingAddress = false
             Toast.makeText(requireContext(), "Erreur lors de la récupération du lieu", Toast.LENGTH_SHORT).show()
         }
@@ -443,13 +481,16 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                 if (!addresses.isNullOrEmpty() && _binding != null) {
                     val address = addresses[0]
                     val latLng = LatLng(address.latitude, address.longitude)
+                    GrafanaLogger.logInfo("Manual geocoding success", mapOf("address" to addressText))
                     if (::googleMap.isInitialized) {
                         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
                     }
                 } else if (_binding != null) {
+                    GrafanaLogger.logWarn("Manual geocoding: Address not found", mapOf("address" to addressText))
                     Toast.makeText(requireContext(), "Adresse introuvable", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
+                GrafanaLogger.logError("Manual geocoding exception", e, mapOf("address" to addressText))
                 if (_binding != null) {
                     Toast.makeText(requireContext(), "Erreur de recherche", Toast.LENGTH_SHORT).show()
                 }
@@ -462,7 +503,6 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     private fun handleOrderFightClick() {
         if (!::googleMap.isInitialized) return
         
-        // SOURCE DE VÉRITÉ : Le centre actuel de la carte (là où est le pin noir)
         val center = googleMap.cameraPosition.target
         val address = binding?.etAddress?.text.toString().trim()
         
@@ -475,6 +515,8 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         val selectedId = binding?.rgFightType?.checkedRadioButtonId ?: -1
         val type = view?.findViewById<RadioButton>(selectedId)?.text.toString()
 
+        GrafanaLogger.logInfo("Client confirming order", mapOf("address" to address, "type" to type))
+
         fightRepository.createFightRequest(
             address = address, 
             lat = center.latitude, 
@@ -486,10 +528,10 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
                     currentFightId = fightId
                 }
             },
-            onFailure = { 
+            onFailure = { e ->
                 if (_binding != null) {
                     setLoadingState(false)
-                    Toast.makeText(requireContext(), "Erreur : ${it.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Erreur : ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         )
@@ -499,8 +541,11 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         val id = currentFightId ?: return
         setLoadingState(true)
         fightRepository.cancelFight(id,
-            onSuccess = { if (_binding != null) setLoadingState(false) },
-            onFailure = {
+            onSuccess = { 
+                GrafanaLogger.logInfo("Fight cancelled by client button")
+                if (_binding != null) setLoadingState(false) 
+            },
+            onFailure = { e ->
                 if (_binding != null) {
                     setLoadingState(false)
                     Toast.makeText(requireContext(), "Erreur d'annulation", Toast.LENGTH_SHORT).show()
@@ -527,6 +572,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
         if (!::googleMap.isInitialized) return
+        GrafanaLogger.logDebug("Starting client location updates")
         googleMap.isMyLocationEnabled = true
         val request = LocationRequest.create().apply {
             interval = 10000
@@ -538,6 +584,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onResume() {
         super.onResume()
+        GrafanaLogger.logDebug("ClientHomeFragment: onResume")
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             startLocationUpdates()
         }
@@ -545,12 +592,14 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onPause() {
         super.onPause()
+        GrafanaLogger.logDebug("ClientHomeFragment: onPause")
         fusedLocationClient.removeLocationUpdates(locationCallback)
         stopTrackingFighter()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        GrafanaLogger.logDebug("ClientHomeFragment: onDestroyView")
         stopChrono()
         _binding = null
     }

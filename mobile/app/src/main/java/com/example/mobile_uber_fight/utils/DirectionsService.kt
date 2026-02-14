@@ -2,6 +2,7 @@ package com.example.mobile_uber_fight.utils
 
 import android.util.Log
 import com.example.mobile_uber_fight.BuildConfig
+import com.example.mobile_uber_fight.logger.NetworkLoggingInterceptor
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,7 +17,9 @@ data class RouteInfo(
 )
 
 object DirectionsService {
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .addInterceptor(NetworkLoggingInterceptor())
+        .build()
 
     suspend fun getDirections(origin: LatLng, destination: LatLng): RouteInfo? = withContext(Dispatchers.IO) {
         val url = "https://maps.googleapis.com/maps/api/directions/json?" +

@@ -9,6 +9,7 @@ import com.example.mobile_uber_fight.databinding.ActivityAuthentificationBinding
 import com.example.mobile_uber_fight.utils.RoleManager
 import com.google.firebase.auth.FirebaseAuth
 import android.util.Log
+import com.example.mobile_uber_fight.logger.GrafanaLogger
 
 class AuthentificationActivity : AppCompatActivity() {
 
@@ -49,8 +50,11 @@ class AuthentificationActivity : AppCompatActivity() {
             return
         }
 
+        GrafanaLogger.logInfo("Attempting login", mapOf("email" to email))
+
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
+                GrafanaLogger.logInfo("Login successful", mapOf("email" to email))
                 RoleManager.routeUser(
                     onSuccess = { role ->
                         val intent = when (role) {
@@ -58,6 +62,7 @@ class AuthentificationActivity : AppCompatActivity() {
                             RoleManager.UserRole.CLIENT -> Intent(this, ClientMainActivity::class.java)
                             RoleManager.UserRole.UNKNOWN -> {
                                 Log.w("AuthActivity", "Rôle inconnu, redirection vers RoleSelectionActivity.")
+                                GrafanaLogger.logWarn("User role unknown", mapOf("email" to email))
                                 Intent(this, RoleSelectionActivity::class.java)
                             }
                         }
@@ -66,11 +71,13 @@ class AuthentificationActivity : AppCompatActivity() {
                         finish()
                     },
                     onFailure = { exception ->
+                        GrafanaLogger.logError("Role routing failed", exception, mapOf("email" to email))
                         Toast.makeText(this, "Impossible de vérifier le rôle: ${exception.message}", Toast.LENGTH_LONG).show()
                     }
                 )
             }
             .addOnFailureListener { e ->
+                GrafanaLogger.logError("Login failed", e, mapOf("email" to email))
                 Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
@@ -84,11 +91,15 @@ class AuthentificationActivity : AppCompatActivity() {
         }
         binding.textInputLayoutEmail.error = null
 
+        GrafanaLogger.logInfo("Requesting password reset", mapOf("email" to email))
+
         auth.sendPasswordResetEmail(email)
             .addOnSuccessListener {
+                GrafanaLogger.logInfo("Password reset email sent", mapOf("email" to email))
                 Toast.makeText(this, getString(R.string.un_email_de_reinitialisation_a_ete_envoye), Toast.LENGTH_LONG).show()
             }
             .addOnFailureListener { e ->
+                GrafanaLogger.logError("Password reset failed", e, mapOf("email" to email))
                 Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
