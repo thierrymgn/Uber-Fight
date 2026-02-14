@@ -8,12 +8,26 @@ import type {
   RecentFight,
   FightStatus,
 } from "@/types/dashboard";
+import { FirebaseError, logFirebaseError, withPerformanceLogging } from "@/lib/grafana";
 
 
 async function getUserDistribution(): Promise<UserDistribution> {
   const db = getAdminFirestore();
-  const usersRef = db.collection("users");
-  const snapshot = await usersRef.get();
+  let snapshot;
+  try {
+    snapshot = await withPerformanceLogging("fetchAllUsers", async () => {
+      const usersRef = db.collection("users");
+
+      return await usersRef.get();
+    });
+  } catch (error) {
+    logFirebaseError(error as FirebaseError, "fetchAllUsers", {});
+    return {
+      clients: 0,
+      fighters: 0,
+      total: 0,
+    };
+  }
 
   let clients = 0;
   let fighters = 0;
@@ -38,8 +52,23 @@ async function getUserDistribution(): Promise<UserDistribution> {
 
 async function getFightStatusDistribution(): Promise<FightStatusDistribution> {
   const db = getAdminFirestore();
-  const fightsRef = db.collection("fights");
-  const snapshot = await fightsRef.get();
+  let snapshot;
+  
+  try {
+    snapshot = await withPerformanceLogging("fetchAllFights", async () => {
+      const fightsRef = db.collection("fights");
+      return await fightsRef.get();
+    });
+  } catch (error) {
+    logFirebaseError(error as FirebaseError, "fetchAllFights", {});
+    return {
+      pending: 0,
+      inProgress: 0,
+      completed: 0,
+      cancelled: 0,
+      total: 0,
+    };
+  }
 
   const distribution: FightStatusDistribution = {
     pending: 0,
@@ -75,8 +104,19 @@ async function getFightStatusDistribution(): Promise<FightStatusDistribution> {
 
 async function getAverageRating(): Promise<number> {
   const db = getAdminFirestore();
-  const usersRef = db.collection("users");
-  const snapshot = await usersRef.where("role", "==", "FIGHTER").get();
+
+  let snapshot;
+
+  try {
+    snapshot = await withPerformanceLogging("fetchAllUsersFilteredByFighter", async () => {
+      const usersRef = db.collection("users");
+
+      return await usersRef.where("role", "==", "FIGHTER").get();
+    });
+  } catch (error) {
+    logFirebaseError(error as FirebaseError, "fetchAllUsersFilteredByFighter", { filter: "role == FIGHTER" });
+    return 0;
+  }
 
   if (snapshot.empty) {
     return 0;
@@ -102,11 +142,16 @@ async function getAverageRating(): Promise<number> {
 
 async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
   const db = getAdminFirestore();
-  const fightsRef = db.collection("fights");
-  const snapshot = await fightsRef
-    .orderBy("createdAt", "desc")
-    .limit(limitCount)
-    .get();
+  let snapshot;
+  try {
+    snapshot = await withPerformanceLogging("fetchRecentFights", async () => {
+      const fightsRef = db.collection("fights");
+      return await fightsRef.orderBy("createdAt", "desc").limit(limitCount).get();
+    });
+  } catch (error) {
+    logFirebaseError(error as FirebaseError, "fetchRecentFights", { limit: limitCount });
+    return [];
+  }
 
   const fights: RecentFight[] = [];
 
@@ -144,7 +189,7 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
 
 export async function GET(request: Request) {
   const authResult = await verifyAuth(request, ["ADMIN"]);
-
+  
   if (!authResult.success) {
     return NextResponse.json(
       { error: authResult.error },

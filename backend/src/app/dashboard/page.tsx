@@ -34,6 +34,7 @@ import type {
 } from "@/types/dashboard";
 import { FIGHT_STATUS_LABELS, CHART_COLORS } from "@/types/dashboard";
 import { useAuth } from "@/components/providers/auth-provider";
+import useLogger from "@/hooks/useLogger";
 
 const userChartConfig: ChartConfig = {
   clients: {
@@ -330,6 +331,7 @@ function useDashboardStats() {
   const [data, setData] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { logError } = useLogger();
 
   const fetchStats = useCallback(async () => {
     if (!user) {
@@ -366,12 +368,12 @@ function useDashboardStats() {
       const stats: DashboardStats = await response.json();
       setData(stats);
     } catch (err) {
-      console.error("Erreur lors du chargement des stats:", err);
+      logError("Failed to fetch dashboard stats", { error: err instanceof Error ? err.message : String(err) });
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, logError]);
 
   useEffect(() => {
     fetchStats();
