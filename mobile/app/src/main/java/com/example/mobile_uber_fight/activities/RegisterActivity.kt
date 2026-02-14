@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mobile_uber_fight.databinding.ActivityRegisterBinding
+import com.example.mobile_uber_fight.logger.GrafanaLogger
 import com.example.mobile_uber_fight.repositories.AuthRepository
 import com.example.mobile_uber_fight.utils.RoleManager
 
@@ -37,8 +38,11 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
+        GrafanaLogger.logInfo("Attempting user registration", mapOf("email" to email, "role" to userRole))
+
         authRepository.register(email, password, fullName, userRole)
             .addOnSuccessListener {
+                GrafanaLogger.logInfo("User registration successful", mapOf("email" to email, "role" to userRole))
                 RoleManager.routeUser(
                     onSuccess = { role ->
                         val intent = when (role) {
@@ -46,6 +50,7 @@ class RegisterActivity : AppCompatActivity() {
                             RoleManager.UserRole.CLIENT -> Intent(this, ClientMainActivity::class.java)
                             RoleManager.UserRole.UNKNOWN -> {
                                 Log.w("AuthActivity", "Rôle inconnu, redirection vers RoleSelectionActivity.")
+                                GrafanaLogger.logWarn("User role unknown after registration", mapOf("email" to email))
                                 Intent(this, RoleSelectionActivity::class.java)
                             }
                         }
@@ -54,11 +59,13 @@ class RegisterActivity : AppCompatActivity() {
                         finish()
                     },
                     onFailure = { exception ->
+                        GrafanaLogger.logError("Role routing failed after registration", exception, mapOf("email" to email))
                         Toast.makeText(this, "Impossible de vérifier le rôle: ${exception.message}", Toast.LENGTH_LONG).show()
                     }
                 )
             }
             .addOnFailureListener { e ->
+                GrafanaLogger.logError("User registration failed", e, mapOf("email" to email))
                 Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }

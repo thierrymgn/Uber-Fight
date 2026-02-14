@@ -1,6 +1,7 @@
 package com.example.mobile_uber_fight.repositories
 
 import com.example.mobile_uber_fight.models.Fight
+import com.example.mobile_uber_fight.logger.GrafanaLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -23,7 +24,9 @@ class FightRepository {
     ) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            onFailure(Exception("Utilisateur non connecté"))
+            val ex = Exception("Utilisateur non connecté")
+            GrafanaLogger.logError("Create fight failed: No user", ex)
+            onFailure(ex)
             return
         }
 
@@ -37,25 +40,45 @@ class FightRepository {
             "createdAt" to FieldValue.serverTimestamp()
         )
 
+        GrafanaLogger.logInfo("Creating fight request", mapOf("address" to address, "type" to fightType))
+
         fightsCollection.add(fightData)
             .addOnSuccessListener { documentReference ->
+                GrafanaLogger.logInfo("Fight request created", mapOf("fightId" to documentReference.id))
                 onSuccess(documentReference.id)
             }
-            .addOnFailureListener { e -> onFailure(e) }
+            .addOnFailureListener { e ->
+                GrafanaLogger.logError("Fight request creation failed", e)
+                onFailure(e)
+            }
     }
 
     fun cancelFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        GrafanaLogger.logInfo("Cancelling fight", mapOf("fightId" to fightId))
         fightsCollection.document(fightId)
             .update("status", "CANCELLED")
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e) }
+            .addOnSuccessListener {
+                GrafanaLogger.logInfo("Fight cancelled successfully", mapOf("fightId" to fightId))
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                GrafanaLogger.logError("Fight cancellation failed", e, mapOf("fightId" to fightId))
+                onFailure(e)
+            }
     }
 
     fun updateFightStatus(fightId: String, newStatus: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit = {}) {
+        GrafanaLogger.logInfo("Updating fight status", mapOf("fightId" to fightId, "newStatus" to newStatus))
         fightsCollection.document(fightId)
             .update("status", newStatus)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e) }
+            .addOnSuccessListener {
+                GrafanaLogger.logInfo("Fight status updated", mapOf("fightId" to fightId, "status" to newStatus))
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                GrafanaLogger.logError("Fight status update failed", e, mapOf("fightId" to fightId, "status" to newStatus))
+                onFailure(e)
+            }
     }
 
     fun listenToPendingFights(onUpdate: (List<Fight>) -> Unit, onFailure: (Exception) -> Unit) {
@@ -64,6 +87,7 @@ class FightRepository {
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
+                    GrafanaLogger.logError("Listen pending fights failed", e)
                     onFailure(e)
                     return@addSnapshotListener
                 }
@@ -83,6 +107,7 @@ class FightRepository {
             .limit(1)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
+                    GrafanaLogger.logError("Listen current request failed", e, mapOf("userId" to userId))
                     onUpdate(null)
                     return@addSnapshotListener
                 }
@@ -101,9 +126,13 @@ class FightRepository {
     fun acceptFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
         val fighterId = auth.currentUser?.uid
         if (fighterId == null) {
-            onFailure(Exception("Impossible d'accepter: utilisateur non connecté."))
+            val ex = Exception("Impossible d'accepter: utilisateur non connecté.")
+            GrafanaLogger.logError("Accept fight failed: No fighter session", ex, mapOf("fightId" to fightId))
+            onFailure(ex)
             return
         }
+
+        GrafanaLogger.logInfo("Fighter accepting fight", mapOf("fightId" to fightId, "fighterId" to fighterId))
 
         fightsCollection.document(fightId)
             .update(
@@ -112,8 +141,14 @@ class FightRepository {
                     "fighterId" to fighterId
                 )
             )
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e) }
+            .addOnSuccessListener {
+                GrafanaLogger.logInfo("Fight accepted successfully", mapOf("fightId" to fightId))
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                GrafanaLogger.logError("Accept fight failed", e, mapOf("fightId" to fightId))
+                onFailure(e)
+            }
     }
 
     fun listenToMyActiveFight(onFightFound: (Fight?) -> Unit, onFailure: (Exception) -> Unit) {
@@ -130,6 +165,7 @@ class FightRepository {
             .limit(1)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
+                    GrafanaLogger.logError("Listen active fight failed", e, mapOf("fighterId" to currentUser.uid))
                     onFailure(e)
                     return@addSnapshotListener
                 }

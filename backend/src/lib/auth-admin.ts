@@ -1,6 +1,4 @@
-import { getAdminFirestore } from "@/lib/firebase-admin";
-import { getAuth } from "firebase-admin/auth";
-import { getApps } from "firebase-admin/app";
+import { getAdminFirestore, getAdminAuth } from "@/lib/firebase-admin";
 
 export interface AuthUser {
   uid: string;
@@ -44,15 +42,7 @@ export async function verifyAuth(
   }
 
   try {
-    if (getApps().length === 0) {
-      return {
-        success: false,
-        error: "Service d'authentification non disponible",
-        status: 401,
-      };
-    }
-
-    const auth = getAuth();
+    const auth = getAdminAuth();
     const decodedToken = await auth.verifyIdToken(idToken);
 
     const db = getAdminFirestore();
@@ -110,10 +100,10 @@ export async function verifyAuth(
         };
       }
     }
-
+    
     return {
       success: false,
-      error: "Erreur d'authentification",
+      error: `Erreur d'authentification`,
       status: 401,
     };
   }

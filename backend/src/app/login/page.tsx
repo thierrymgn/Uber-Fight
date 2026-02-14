@@ -7,6 +7,7 @@ import Image from "next/image";
 import { AuthError } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import useLogger from "@/hooks/useLogger";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -19,6 +20,7 @@ export default function LoginPage() {
     const { login, logout, resetPassword } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { logError } = useLogger();
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -35,8 +37,9 @@ export default function LoginPage() {
                 try {
                     await logout();
                 } catch (logoutError) {
-                    console.error("Failed to logout non-admin user:", logoutError);
+                    logError("Failed to logout non-admin user", { error: logoutError instanceof Error ? logoutError.message : String(logoutError) });
                 }
+
                 setError("Accès refusé. Seuls les administrateurs peuvent se connecter.");
                 setLoading(false);
                 return;
@@ -46,6 +49,7 @@ export default function LoginPage() {
             router.push(redirectTo);
         } catch (err) {
             const authError = err as AuthError;
+            logError("Failed to login user", { error: err instanceof Error ? err.message : String(err) });
             setError(
                 authError.code === "auth/invalid-credential"
                     ? "Email ou mot de passe incorrect"
@@ -68,6 +72,7 @@ export default function LoginPage() {
             setResetEmailSent(true);
         } catch (err) {
             const authError = err as AuthError;
+            logError("Failed to reset password", { error: err instanceof Error ? err.message : String(err) });
             setError(
                 authError.code === "auth/invalid-email"
                     ? "Email invalide"

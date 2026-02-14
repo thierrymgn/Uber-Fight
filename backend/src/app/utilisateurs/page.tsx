@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Search, UserPlus, RefreshCw } from "lucide-react";
+import useLogger from "@/hooks/useLogger";
 
 export default function UtilisateursPage() {
     const { user, loading: authLoading } = useAuth();
@@ -20,6 +21,7 @@ export default function UtilisateursPage() {
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("ALL");
+    const { logError } = useLogger();
 
     const fetchUsers = useCallback(async () => {
         try {
@@ -32,25 +34,26 @@ export default function UtilisateursPage() {
             setUsers(users);
             setError(null);
         } catch (err) {
-            console.error("Erreur lors de la récupération des utilisateurs:", err);
+            logError("Failed to fetch users", { error: err instanceof Error ? err.message : String(err) });
             const errorMessage = err instanceof Error ? err.message : "Erreur lors de la récupération des utilisateurs";
             setError(errorMessage);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [logError]);
 
     useEffect(() => {
         if (authLoading) return;
 
         if (!user) {
             setError("Vous devez être connecté pour voir cette page");
+            logError("Unauthorized access to users page");
             setLoading(false);
             return;
         }
 
         fetchUsers();
-    }, [user, authLoading, fetchUsers]);
+    }, [user, authLoading, fetchUsers, logError]);
 
     const filteredUsers = useMemo(() => {
         return users.filter((u) => {

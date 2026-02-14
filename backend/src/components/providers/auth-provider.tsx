@@ -5,18 +5,17 @@ import {
     User,
     UserCredential,
     signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
     signOut as firebaseSignOut,
     onAuthStateChanged,
     sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import useLogger from "@/hooks/useLogger";
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<UserCredential>;
-    register: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
 }
@@ -25,7 +24,6 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
     login: async () => { throw new Error("AuthContext not initialized"); },
-    register: async () => {},
     logout: async () => {},
     resetPassword: async () => {},
 });
@@ -33,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const { logInfo, logError } = useLogger();
 
     useEffect(() => {
         let unsubscribe: (() => void) | undefined;
@@ -44,33 +43,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setLoading(false);
                 },
                 (error) => {
-                    console.error("Error observing auth state:", error);
+                    logError("Error observing auth state", { error: error instanceof Error ? error.message : String(error) });
                     setUser(null);
                     setLoading(false);
                 }
             );
         } catch (error) {
-            console.error("Failed to set up auth state listener:", error);
+            logError("Failed to set up auth state listener", { error: error instanceof Error ? error.message : String(error) });
             setUser(null);
             setLoading(false);
         }
         return unsubscribe ?? (() => {});
-    }, []);
+    }, [logError]);
 
     const login = async (email: string, password: string): Promise<UserCredential> => {
-        return await signInWithEmailAndPassword(auth, email, password);
-    };
-
-    const register = async (email: string, password: string) => {
-        await createUserWithEmailAndPassword(auth, email, password);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            logInfo("User logged in successfully", { email });
+            return userCredential;
+        } catch (error) {
+            logError("Failed to log in user", { email, error: error instanceof Error ? error.message : String(error) });
+            throw error;
+        }
     };
 
     const logout = async () => {
-        await firebaseSignOut(auth);
+        try {
+            await firebaseSignOut(auth);
+            logInfo("User logged out successfully");
+        } catch (error) {
+            logError("Failed to log out user", { error: error instanceof Error ? error.message : String(error) });
+        }
     };
 
     const resetPassword = async (email: string) => {
-        await sendPasswordResetEmail(auth, email);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            logInfo("Password reset email sent", { email });
+        } catch (error) {
+            logError("Failed to send password reset email", { email, error: error instanceof Error ? error.message : String(error) });
+            throw error;
+        }
     };
 
     return (
@@ -79,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 user,
                 loading,
                 login,
-                register,
                 logout,
                 resetPassword,
             }}

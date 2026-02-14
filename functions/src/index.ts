@@ -1,6 +1,7 @@
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2";
+import { logFunction } from "./lib/grafana-logger";
 
 export { deleteUser, updateUser } from "./users";
 
@@ -19,6 +20,14 @@ export const onFightStatusChanged = onDocumentUpdated("fights/{fightId}", async 
     const clientUserId = after?.requesterId;
     const fighterUserId = after?.fighterId;
     const fightId = event.params.fightId;
+
+    await logFunction("onFightStatusChanged", "Fight status changed", "info", {
+        fightId,
+        oldStatus: before?.status,
+        newStatus,
+        clientUserId,
+        fighterUserId,
+    });
 
     let title = "";
     let body = "";
@@ -70,19 +79,30 @@ export const onFightStatusChanged = onDocumentUpdated("fights/{fightId}", async 
 
         try {
             await admin.messaging().send(message);
-            console.log(`🔔 Notif envoyée à ${targetUserId} avec action ${clickAction}`);
+            await logFunction("onFightStatusChanged", "FCM notification sent", "info", {
+                fightId,
+                targetUserId,
+                clickAction,
+                newStatus,
+            });
         } catch (error) {
-            console.error("Erreur envoi FCM:", error);
+            await logFunction("onFightStatusChanged", "FCM notification failed", "error", {
+                fightId,
+                targetUserId,
+                errorMessage: error instanceof Error ? error.message : String(error),
+            });
         }
     }
 });
 
 export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (event) => {
-    console.log("🚀 Trigger déclenché ! Début du calcul de moyenne.");
+    const reviewId = event.params.reviewId;
+    
+    await logFunction("onReviewCreated", "Review trigger started", "info", { reviewId });
 
     const snapshot = event.data;
     if (!snapshot) {
-        console.error("❌ Pas de données dans l'événement.");
+        await logFunction("onReviewCreated", "No data in event", "error", { reviewId });
         return;
     }
 
@@ -90,10 +110,18 @@ export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (ev
     const targetUserId = reviewData.toUserId;
     const newRating = Number(reviewData.rating);
 
-    console.log(`Review reçue pour User: ${targetUserId} | Note: ${newRating}`);
+    await logFunction("onReviewCreated", "Processing review", "info", {
+        reviewId,
+        targetUserId,
+        rating: newRating,
+    });
 
     if (!targetUserId || newRating === undefined || newRating === null || Number.isNaN(newRating)) {
-        console.error("❌ Données invalides (toUserId ou rating manquant).");
+        await logFunction("onReviewCreated", "Invalid review data", "error", {
+            reviewId,
+            targetUserId: targetUserId || "missing",
+            rating: newRating,
+        });
         return;
     }
 
@@ -104,15 +132,16 @@ export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (ev
             const userDoc = await transaction.get(userRef);
             
             if (!userDoc.exists) {
-                console.error(`❌ L'utilisateur ${targetUserId} n'existe pas dans la collection 'users'.`);
+                await logFunction("onReviewCreated", "User not found", "error", {
+                    reviewId,
+                    targetUserId,
+                });
                 return;
             }
 
             const userData = userDoc.data();
             const oldRating = Number(userData?.rating || 0);
             const oldCount = Number(userData?.ratingCount || 0);
-
-            console.log(`📊 Avant: Moyenne ${oldRating} (${oldCount} votes)`);
 
             const newCount = oldCount + 1;
             const newAverage = oldRating + (newRating - oldRating) / newCount;
@@ -122,9 +151,20 @@ export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (ev
                 ratingCount: newCount
             });
             
-            console.log(`✅ SUCCÈS : Nouvelle moyenne ${newAverage} (${newCount} votes) enregistrée.`);
+            await logFunction("onReviewCreated", "Rating updated", "info", {
+                reviewId,
+                targetUserId,
+                oldRating,
+                newRating: newAverage,
+                oldCount,
+                newCount,
+            });
         });
     } catch (error) {
-        console.error("❌ CRASH pendant la transaction :", error);
+        await logFunction("onReviewCreated", "Transaction failed", "error", {
+            reviewId,
+            targetUserId,
+            errorMessage: error instanceof Error ? error.message : String(error),
+        });
     }
 });

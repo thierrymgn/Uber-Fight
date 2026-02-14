@@ -42,9 +42,12 @@ jobs:
 
       - name: Create local.properties
         if: env.MAPS_API_KEY != ''
-        run: echo "MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}" > local.properties
+        run: |
+          echo "MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}" > local.properties
+          echo "GRAFANA_API_URL=${{ secrets.GRAFANA_API_URL }}" >> local.properties
         env:
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+          GRAFANA_API_URL: ${{ secrets.GRAFANA_API_URL }}
 
       - name: Create google-services.json
         if: env.GOOGLE_SERVICES_JSON != ''
