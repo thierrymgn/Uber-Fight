@@ -101,9 +101,12 @@ export async function verifyAuth(
       }
     }
 
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Auth error details:", errorMessage);
+    
     return {
       success: false,
-      error: "Erreur d'authentification",
+      error: `Erreur d'authentification: ${errorMessage}`,
       status: 401,
     };
   }
