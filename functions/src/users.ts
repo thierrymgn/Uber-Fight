@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { logFunction } from "./lib/grafana-logger";
 
 const REGION = "europe-west1";
 
@@ -11,6 +12,11 @@ export const deleteUser = onCall({ region: REGION }, async (request) => {
     const callerUid = request.auth.uid;
     const userIdToDelete = request.data.userId;
 
+    await logFunction("deleteUser", "Delete user requested", "info", {
+        callerUid,
+        userIdToDelete,
+    });
+
     if (!userIdToDelete || typeof userIdToDelete !== "string") {
         throw new HttpsError("invalid-argument", "L'ID de l'utilisateur à supprimer est requis.");
     }
@@ -19,6 +25,11 @@ export const deleteUser = onCall({ region: REGION }, async (request) => {
     const callerData = callerDoc.data();
 
     if (!callerDoc.exists || callerData?.role.toLowerCase() !== "admin") {
+        await logFunction("deleteUser", "Permission denied", "warn", {
+            callerUid,
+            userIdToDelete,
+            reason: "not_admin",
+        });
         throw new HttpsError("permission-denied", "Seuls les administrateurs peuvent supprimer des utilisateurs.");
     }
 
@@ -28,14 +39,20 @@ export const deleteUser = onCall({ region: REGION }, async (request) => {
 
     try {
         await admin.firestore().collection("users").doc(userIdToDelete).delete();
-        console.log(`📄 Document Firestore supprimé pour l'utilisateur ${userIdToDelete}`);
-
         await admin.auth().deleteUser(userIdToDelete);
-        console.log(`🔐 Compte Auth supprimé pour l'utilisateur ${userIdToDelete}`);
+
+        await logFunction("deleteUser", "User deleted successfully", "info", {
+            callerUid,
+            userIdToDelete,
+        });
 
         return { success: true, message: "Utilisateur supprimé avec succès." };
     } catch (error) {
-        console.error(`❌ Erreur lors de la suppression de l'utilisateur ${userIdToDelete}:`, error);
+        await logFunction("deleteUser", "Delete user failed", "error", {
+            callerUid,
+            userIdToDelete,
+            errorMessage: error instanceof Error ? error.message : String(error),
+        });
 
         if (error instanceof Error && error.message.includes("auth/user-not-found")) {
             return { success: true, message: "Document utilisateur supprimé (compte Auth inexistant)." };
@@ -53,6 +70,12 @@ export const updateUser = onCall({ region: REGION }, async (request) => {
     const callerUid = request.auth.uid;
     const { userId, username, email, role } = request.data;
 
+    await logFunction("updateUser", "Update user requested", "info", {
+        callerUid,
+        userId,
+        fieldsToUpdate: [username ? "username" : null, email ? "email" : null, role ? "role" : null].filter(Boolean).join(", "),
+    });
+
     if (!userId || typeof userId !== "string") {
         throw new HttpsError("invalid-argument", "L'ID de l'utilisateur est requis.");
     }
@@ -61,6 +84,11 @@ export const updateUser = onCall({ region: REGION }, async (request) => {
     const callerData = callerDoc.data();
 
     if (!callerDoc.exists || callerData?.role.toLowerCase() !== "admin") {
+        await logFunction("updateUser", "Permission denied", "warn", {
+            callerUid,
+            userId,
+            reason: "not_admin",
+        });
         throw new HttpsError("permission-denied", "Seuls les administrateurs peuvent modifier des utilisateurs.");
     }
 
@@ -81,9 +109,12 @@ export const updateUser = onCall({ region: REGION }, async (request) => {
         if (emailChanged) {
             try {
                 await admin.auth().updateUser(userId, { email });
-                console.log(`📧 Email Auth mis à jour pour l'utilisateur ${userId}`);
             } catch (authError) {
-                console.error(`❌ Erreur lors de la mise à jour de l'email Auth:`, authError);
+                await logFunction("updateUser", "Email update failed", "error", {
+                    callerUid,
+                    userId,
+                    errorMessage: authError instanceof Error ? authError.message : String(authError),
+                });
                 
                 if (authError instanceof Error) {
                     if (authError.message.includes("email-already-exists")) {
@@ -99,8 +130,14 @@ export const updateUser = onCall({ region: REGION }, async (request) => {
 
         if (Object.keys(firestoreUpdate).length > 0) {
             await admin.firestore().collection("users").doc(userId).update(firestoreUpdate);
-            console.log(`📄 Document Firestore mis à jour pour l'utilisateur ${userId}`);
         }
+
+        await logFunction("updateUser", "User updated successfully", "info", {
+            callerUid,
+            userId,
+            emailChanged,
+            fieldsUpdated: Object.keys(firestoreUpdate).join(", "),
+        });
 
         return { 
             success: true, 
@@ -112,7 +149,11 @@ export const updateUser = onCall({ region: REGION }, async (request) => {
         if (error instanceof HttpsError) {
             throw error;
         }
-        console.error(`❌ Erreur lors de la modification de l'utilisateur ${userId}:`, error);
+        await logFunction("updateUser", "Update user failed", "error", {
+            callerUid,
+            userId,
+            errorMessage: error instanceof Error ? error.message : String(error),
+        });
         throw new HttpsError("internal", "Une erreur est survenue lors de la modification de l'utilisateur.");
     }
 });
