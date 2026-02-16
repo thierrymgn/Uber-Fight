@@ -54,8 +54,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
-    implementation("com.google.firebase:firebase-firestore")
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
+    implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
@@ -68,4 +68,6 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.firebase.messaging)
     implementation(libs.play.services.auth)
+    implementation(libs.glide)
+    implementation(libs.firebase.storage)
 }

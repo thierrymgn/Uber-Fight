@@ -1,5 +1,6 @@
 package com.example.mobile_uber_fight.repositories
 
+import android.net.Uri
 import android.util.Log
 import com.example.mobile_uber_fight.models.User
 import com.example.mobile_uber_fight.models.UserSettings
@@ -9,11 +10,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.FirebaseStorage
 
 class UserRepository {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
     fun updateUserLocation(latitude: Double, longitude: Double) {
         val currentUser = auth.currentUser
@@ -114,5 +117,33 @@ class UserRepository {
             .update(mapOf("username" to username, "email" to email))
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun uploadProfilePicture(imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onFailure(Exception("User not logged in"))
+        val fileRef = storage.reference.child("profile_images/$uid.jpg")
+
+        fileRef.putFile(imageUri)
+            .continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    task.exception?.let { throw it }
+                }
+                fileRef.downloadUrl
+            }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val downloadUri = task.result.toString()
+                    db.collection("users").document(uid)
+                        .update("photoUrl", downloadUri)
+                        .addOnSuccessListener {
+                            onSuccess(downloadUri)
+                        }
+                        .addOnFailureListener { e ->
+                            onFailure(e)
+                        }
+                } else {
+                    task.exception?.let { onFailure(it) }
+                }
+            }
     }
 }
