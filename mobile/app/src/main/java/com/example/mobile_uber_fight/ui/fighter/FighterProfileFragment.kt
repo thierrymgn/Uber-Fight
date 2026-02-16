@@ -19,8 +19,7 @@ class FighterProfileFragment : Fragment() {
     private val binding get() = _binding!!
     private val userRepository = UserRepository()
 
-    private var currentFirstName: String = ""
-    private var currentLastName: String = ""
+    private var currentUsername: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,9 +48,7 @@ class FighterProfileFragment : Fragment() {
         userRepository.getCurrentUser(
             onSuccess = { user ->
                 if (user != null) {
-                    currentFirstName = user.firstName
-                    currentLastName = user.lastName
-                    updateUI()
+                    currentUsername = user.username
                 }
             },
             onFailure = { e ->
@@ -64,21 +61,11 @@ class FighterProfileFragment : Fragment() {
         )
     }
 
-    private fun updateUI() {
-        val fullName = if (currentFirstName.isNotEmpty() || currentLastName.isNotEmpty()) {
-            "$currentFirstName $currentLastName".trim()
-        } else {
-            "-"
-        }
-        binding.tvFullName.text = fullName
-    }
-
     private fun showEditProfileDialog() {
         val dialogBinding = DialogEditProfileBinding.inflate(layoutInflater)
 
         // Pré-remplir avec les valeurs actuelles
-        dialogBinding.etFirstName.setText(currentFirstName)
-        dialogBinding.etLastName.setText(currentLastName)
+        dialogBinding.etUsername.setText(currentUsername)
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogBinding.root)
@@ -88,10 +75,9 @@ class FighterProfileFragment : Fragment() {
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val firstName = dialogBinding.etFirstName.text.toString().trim()
-                val lastName = dialogBinding.etLastName.text.toString().trim()
+                val username = dialogBinding.etUsername.text.toString().trim()
 
-                if (firstName.isEmpty() || lastName.isEmpty()) {
+                if (username.isEmpty()) {
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.veuillez_remplir_tous_les_champs),
@@ -100,21 +86,18 @@ class FighterProfileFragment : Fragment() {
                     return@setOnClickListener
                 }
 
-                updateProfile(firstName, lastName, dialog)
+                updateProfile(username, dialog)
             }
         }
 
         dialog.show()
     }
 
-    private fun updateProfile(firstName: String, lastName: String, dialog: AlertDialog) {
+    private fun updateProfile(username: String, dialog: AlertDialog) {
         userRepository.updateUserProfile(
-            firstName = firstName,
-            lastName = lastName,
+            username = username,
             onSuccess = {
-                currentFirstName = firstName
-                currentLastName = lastName
-                updateUI()
+                currentUsername = username
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.profil_mis_a_jour),

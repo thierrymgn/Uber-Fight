@@ -64,7 +64,7 @@ class ClientProfileFragment : Fragment() {
     private fun showEditProfileDialog() {
         val dialogBinding = DialogEditProfileBinding.inflate(layoutInflater)
         
-        dialogBinding.etFirstName.setText(currentUsername)
+        dialogBinding.etUsername.setText(currentUsername)
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogBinding.root)
@@ -74,10 +74,9 @@ class ClientProfileFragment : Fragment() {
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val firstName = dialogBinding.etFirstName.text.toString().trim()
-                val lastName = dialogBinding.etLastName.text.toString().trim()
+                val username = dialogBinding.etUsername.text.toString().trim()
 
-                if (firstName.isEmpty() || lastName.isEmpty()) {
+                if (username.isEmpty()) {
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.veuillez_remplir_tous_les_champs),
@@ -86,19 +85,18 @@ class ClientProfileFragment : Fragment() {
                     return@setOnClickListener
                 }
 
-                updateProfile(firstName, lastName, dialog)
+                updateProfile(username, dialog)
             }
         }
 
         dialog.show()
     }
 
-    private fun updateProfile(firstName: String, lastName: String, dialog: AlertDialog) {
+    private fun updateProfile(username: String, dialog: AlertDialog) {
         userRepository.updateUserProfile(
-            firstName = firstName,
-            lastName = lastName,
+            username = username,
             onSuccess = {
-                currentUsername = firstName
+                currentUsername = username
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.profil_mis_a_jour),

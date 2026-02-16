@@ -111,16 +111,14 @@ class UserRepository {
     }
 
     fun updateUserProfile(
-        firstName: String,
-        lastName: String,
+        username: String,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
         val currentUser = auth.currentUser
         if (currentUser != null) {
             val updates = hashMapOf<String, Any>(
-                "firstName" to firstName,
-                "lastName" to lastName
+                "username" to username,
             )
 
             db.collection("users").document(currentUser.uid)
