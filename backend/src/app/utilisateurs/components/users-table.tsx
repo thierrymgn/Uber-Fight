@@ -149,7 +149,7 @@ export default function UsersTable({ users, onUserDeleted }: UsersTableProps) {
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-9 w-9">
-                                                    <AvatarImage src={undefined} />
+                                                    <AvatarImage src={user.photoUrl || undefined} />
                                                     <AvatarFallback className="text-xs">
                                                         {getUserInitials(user.username)}
                                                     </AvatarFallback>
