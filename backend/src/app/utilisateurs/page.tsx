@@ -198,11 +198,13 @@ export default function UtilisateursPage() {
                 <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Trier par :</span>
                 <div className="flex gap-2">
-                  {([
-                    { value: 'default', label: 'Par défaut' },
-                    { value: 'rating-desc', label: 'Meilleur rating' },
-                    { value: 'rating-asc', label: 'Pire rating' },
-                  ] as const).map((option) => (
+                  {(
+                    [
+                      { value: 'default', label: 'Par défaut' },
+                      { value: 'rating-desc', label: 'Meilleur rating' },
+                      { value: 'rating-asc', label: 'Pire rating' },
+                    ] as const
+                  ).map((option) => (
                     <Button
                       key={option.value}
                       variant={sortOption === option.value ? 'default' : 'outline'}

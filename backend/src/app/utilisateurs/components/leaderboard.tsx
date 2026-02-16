@@ -30,7 +30,9 @@ export default function Leaderboard({ users }: LeaderboardProps) {
     if (index === 0) return <Trophy className="h-5 w-5 text-yellow-500" />;
     if (index === 1) return <Medal className="h-5 w-5 text-gray-400" />;
     if (index === 2) return <Medal className="h-5 w-5 text-amber-700" />;
-    return <span className="text-sm font-bold text-muted-foreground w-5 text-center">{index + 1}</span>;
+    return (
+      <span className="text-sm font-bold text-muted-foreground w-5 text-center">{index + 1}</span>
+    );
   };
 
   const getRankBg = (index: number) => {
@@ -58,7 +60,8 @@ export default function Leaderboard({ users }: LeaderboardProps) {
           <CardTitle>Leaderboard</CardTitle>
         </div>
         <CardDescription>
-          Classement des utilisateurs par rating (admins exclus) — {rankedUsers.length} utilisateur{rankedUsers.length > 1 ? 's' : ''}
+          Classement des utilisateurs par rating (admins exclus) — {rankedUsers.length} utilisateur
+          {rankedUsers.length > 1 ? 's' : ''}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -68,9 +71,7 @@ export default function Leaderboard({ users }: LeaderboardProps) {
               key={user.id}
               className={`flex items-center gap-4 p-3 rounded-lg border ${getRankBg(index)}`}
             >
-              <div className="flex items-center justify-center w-8">
-                {getRankIcon(index)}
-              </div>
+              <div className="flex items-center justify-center w-8">{getRankIcon(index)}</div>
               <Avatar className="h-9 w-9">
                 <AvatarImage src={user.photoUrl || undefined} />
                 <AvatarFallback className="text-xs">
@@ -79,7 +80,9 @@ export default function Leaderboard({ users }: LeaderboardProps) {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{user.username}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {user.role.toLowerCase()}
+                </p>
               </div>
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
