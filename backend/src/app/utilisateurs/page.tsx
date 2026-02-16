@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Search, UserPlus, RefreshCw } from "lucide-react";
+import CreateUserDialog from "@/app/utilisateurs/components/create-user-dialog";
 import useLogger from "@/hooks/useLogger";
 
 export default function UtilisateursPage() {
@@ -21,6 +22,7 @@ export default function UtilisateursPage() {
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("ALL");
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const { logError } = useLogger();
 
     const fetchUsers = useCallback(async () => {
@@ -147,7 +149,7 @@ export default function UtilisateursPage() {
                         <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                         Actualiser
                     </Button>
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         Ajouter
                     </Button>
@@ -190,6 +192,13 @@ export default function UtilisateursPage() {
             <UsersTable
                 users={filteredUsers}
                 onUserDeleted={handleUserDeleted}
+            />
+
+            {/* Dialog de création */}
+            <CreateUserDialog
+                open={createDialogOpen}
+                onOpenChange={setCreateDialogOpen}
+                onUserCreated={fetchUsers}
             />
         </div>
     );

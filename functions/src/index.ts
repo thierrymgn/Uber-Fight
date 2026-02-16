@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { logFunction } from "./lib/grafana-logger";
 
-export { deleteUser, updateUser } from "./users";
+export { deleteUser, updateUser, createUser } from "./users";
 
 admin.initializeApp();
 
