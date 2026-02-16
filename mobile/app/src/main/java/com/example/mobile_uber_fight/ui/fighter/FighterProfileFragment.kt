@@ -2,16 +2,15 @@ package com.example.mobile_uber_fight.ui.fighter
 
 import android.app.AlertDialog
 import android.os.Bundle
-import android.view.LayoutInflater
+import android.util.Patterns
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.DialogEditProfileBinding
-import com.example.mobile_uber_fight.databinding.FragmentFighterProfileBinding
 import com.example.mobile_uber_fight.repositories.UserRepository
+import com.example.mobile_uber_fight.databinding.FragmentFighterProfileBinding
 
 class FighterProfileFragment : Fragment() {
 
@@ -103,7 +102,7 @@ class FighterProfileFragment : Fragment() {
                     return@setOnClickListener
                 }
 
-                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                     dialogBinding.tilEmail.error = "Email invalide"
                     return@setOnClickListener
                 }
