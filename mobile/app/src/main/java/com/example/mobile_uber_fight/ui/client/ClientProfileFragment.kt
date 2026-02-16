@@ -49,6 +49,13 @@ class ClientProfileFragment : Fragment() {
             onSuccess = { user ->
                 if (user != null) {
                     currentUsername = user.username
+                    binding.tvFullName.text = if (currentUsername.isNotEmpty()) {
+                        currentUsername
+                    } else {
+                        "-"
+                    }
+                } else {
+                    binding.tvFullName.text = "-"
                 }
             },
             onFailure = { e ->
@@ -57,6 +64,7 @@ class ClientProfileFragment : Fragment() {
                     getString(R.string.erreur_mise_a_jour_profil),
                     Toast.LENGTH_SHORT
                 ).show()
+                binding.tvFullName.text = "-"
             }
         )
     }
@@ -97,6 +105,7 @@ class ClientProfileFragment : Fragment() {
             username = username,
             onSuccess = {
                 currentUsername = username
+                binding.tvFullName.text = username
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.profil_mis_a_jour),
@@ -104,10 +113,10 @@ class ClientProfileFragment : Fragment() {
                 ).show()
                 dialog.dismiss()
             },
-            onFailure = { e ->
+            onFailure = { e: Exception ->
                 Toast.makeText(
                     requireContext(),
-                    getString(R.string.erreur_mise_a_jour_profil),
+                    "${getString(R.string.erreur_mise_a_jour_profil)}: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
             }
