@@ -3,6 +3,7 @@ import * as admin from "firebase-admin";
 import { logFunction } from "./lib/grafana-logger";
 
 const REGION = "europe-west1";
+const VALID_ROLES = ["CLIENT", "FIGHTER", "ADMIN"];
 
 export const deleteUser = onCall({ region: REGION }, async (request) => {
     if (!request.auth) {
@@ -155,5 +156,107 @@ export const updateUser = onCall({ region: REGION }, async (request) => {
             errorMessage: error instanceof Error ? error.message : String(error),
         });
         throw new HttpsError("internal", "Une erreur est survenue lors de la modification de l'utilisateur.");
+    }
+});
+
+export const createUser = onCall({ region: REGION }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Vous devez être connecté pour effectuer cette action.");
+    }
+
+    const callerUid = request.auth.uid;
+    const { email, username, password, role } = request.data;
+
+    await logFunction("createUser", "Create user requested", "info", {
+        callerUid,
+        email,
+        username,
+        role,
+    });
+
+    const callerDoc = await admin.firestore().collection("users").doc(callerUid).get();
+    const callerData = callerDoc.data();
+
+    if (!callerDoc.exists || callerData?.role.toLowerCase() !== "admin") {
+        await logFunction("createUser", "Permission denied", "warn", {
+            callerUid,
+            reason: "not_admin",
+        });
+        throw new HttpsError("permission-denied", "Seuls les administrateurs peuvent créer des utilisateurs.");
+    }
+
+    if (!email || typeof email !== "string" || !email.trim()) {
+        throw new HttpsError("invalid-argument", "L'adresse email est requise.");
+    }
+
+    if (!username || typeof username !== "string" || !username.trim()) {
+        throw new HttpsError("invalid-argument", "Le nom d'utilisateur est requis.");
+    }
+
+    if (!password || typeof password !== "string" || password.length < 6) {
+        throw new HttpsError("invalid-argument", "Le mot de passe doit contenir au moins 6 caractères.");
+    }
+
+    const normalizedRole = (role || "CLIENT").toUpperCase();
+    if (!VALID_ROLES.includes(normalizedRole)) {
+        throw new HttpsError("invalid-argument", `Le rôle doit être l'un des suivants : ${VALID_ROLES.join(", ")}.`);
+    }
+
+    try {
+        const userRecord = await admin.auth().createUser({
+            email: email.trim(),
+            password,
+            displayName: username.trim(),
+        });
+
+        await admin.firestore().collection("users").doc(userRecord.uid).set({
+            uid: userRecord.uid,
+            username: username.trim(),
+            email: email.trim(),
+            role: normalizedRole,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            fcmToken: "",
+            location: null,
+            photoUrl: "",
+            rating: 0,
+            ratingCount: 0,
+        });
+
+        await logFunction("createUser", "User created successfully", "info", {
+            callerUid,
+            newUserId: userRecord.uid,
+            email: email.trim(),
+            role: normalizedRole,
+        });
+
+        return {
+            success: true,
+            message: "Utilisateur créé avec succès.",
+            userId: userRecord.uid,
+        };
+    } catch (error) {
+        await logFunction("createUser", "Create user failed", "error", {
+            callerUid,
+            email,
+            errorMessage: error instanceof Error ? error.message : String(error),
+        });
+
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+
+        if (error instanceof Error) {
+            if (error.message.includes("email-already-exists")) {
+                throw new HttpsError("already-exists", "Cet email est déjà utilisé par un autre compte.");
+            }
+            if (error.message.includes("invalid-email")) {
+                throw new HttpsError("invalid-argument", "L'adresse email est invalide.");
+            }
+            if (error.message.includes("invalid-password") || error.message.includes("weak-password")) {
+                throw new HttpsError("invalid-argument", "Le mot de passe est trop faible. Il doit contenir au moins 6 caractères.");
+            }
+        }
+
+        throw new HttpsError("internal", `Une erreur est survenue lors de la création de l'utilisateur. ${error instanceof Error ? error.message : String(error)}`);
     }
 });

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { sendLog } from "@/lib/grafana/logger";
+import { NextRequest, NextResponse } from 'next/server';
+import { sendLog } from '@/lib/grafana/logger';
 
 const EXCLUDED_PATTERNS = [
   /^\/_next\/static\//,
@@ -17,22 +17,22 @@ function shouldExclude(pathname: string): boolean {
 }
 
 function getClientIP(request: NextRequest): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
+  const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
+    return forwardedFor.split(',')[0].trim();
   }
 
-  const realIP = request.headers.get("x-real-ip");
+  const realIP = request.headers.get('x-real-ip');
   if (realIP) {
     return realIP;
   }
 
-  const vercelForwardedFor = request.headers.get("x-vercel-forwarded-for");
+  const vercelForwardedFor = request.headers.get('x-vercel-forwarded-for');
   if (vercelForwardedFor) {
     return vercelForwardedFor;
   }
 
-  return "unknown";
+  return 'unknown';
 }
 
 export async function middleware(request: NextRequest) {
@@ -48,28 +48,26 @@ export async function middleware(request: NextRequest) {
     url: request.url,
     path: pathname,
     ip: getClientIP(request),
-    userAgent: request.headers.get("user-agent") || "unknown",
-    referer: request.headers.get("referer") || undefined,
+    userAgent: request.headers.get('user-agent') || 'unknown',
+    referer: request.headers.get('referer') || undefined,
   };
 
   const response = NextResponse.next();
 
   const duration = Date.now() - startTime;
 
-  sendLog(`[Middleware] ${requestData.method} ${requestData.path}`, "info", {
+  sendLog(`[Middleware] ${requestData.method} ${requestData.path}`, 'info', {
     ...requestData,
     duration,
-    category: "http_middleware",
-    phase: "request",
+    category: 'http_middleware',
+    phase: 'request',
   }).catch((error) => {
-    console.error("[Middleware] Failed to send log:", error);
+    console.error('[Middleware] Failed to send log:', error);
   });
 
   return response;
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

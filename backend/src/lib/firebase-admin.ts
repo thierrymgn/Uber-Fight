@@ -1,6 +1,6 @@
-import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
-import { getFirestore, type Firestore } from "firebase-admin/firestore";
-import { getAuth, type Auth } from "firebase-admin/auth";
+import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { getAuth, type Auth } from 'firebase-admin/auth';
 
 let adminApp: App | undefined;
 let adminDb: Firestore | undefined;
@@ -12,7 +12,7 @@ function getAdminApp(): App {
   }
 
   const existingApps = getApps();
-  
+
   if (existingApps.length > 0) {
     adminApp = existingApps[0];
     return adminApp;
@@ -20,13 +20,13 @@ function getAdminApp(): App {
 
   if (process.env.FIREBASE_ADMIN_PRIVATE_KEY) {
     let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
-    
+
     if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
       privateKey = privateKey.slice(1, -1);
     }
-    
-    privateKey = privateKey.replace(/\\n/g, "\n");
-    
+
+    privateKey = privateKey.replace(/\\n/g, '\n');
+
     adminApp = initializeApp({
       credential: cert({
         projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
@@ -36,7 +36,7 @@ function getAdminApp(): App {
     });
   } else {
     throw new Error(
-      "Firebase Admin credentials manquantes. Ajoute FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL et FIREBASE_ADMIN_PRIVATE_KEY dans .env"
+      'Firebase Admin credentials manquantes. Ajoute FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL et FIREBASE_ADMIN_PRIVATE_KEY dans .env'
     );
   }
 
@@ -50,7 +50,7 @@ export function getAdminFirestore(): Firestore {
 
   const app = getAdminApp();
   adminDb = getFirestore(app);
-  
+
   return adminDb;
 }
 
@@ -61,6 +61,6 @@ export function getAdminAuth(): Auth {
 
   const app = getAdminApp();
   adminAuth = getAuth(app);
-  
+
   return adminAuth;
 }

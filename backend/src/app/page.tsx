@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useAuth } from "@/components/providers/auth-provider";
-import Link from "next/link";
+import { useAuth } from '@/components/providers/auth-provider';
+import Link from 'next/link';
 
 export default function Home() {
   const { user } = useAuth();
@@ -19,7 +19,8 @@ export default function Home() {
             </p>
           )}
           <p className="text-lg text-gray-600 dark:text-gray-400 text-center max-w-2xl">
-            Application de gestion Uber Fight. Utilisez la sidebar pour naviguer entre les différentes sections.
+            Application de gestion Uber Fight. Utilisez la sidebar pour naviguer entre les
+            différentes sections.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 w-full max-w-2xl">

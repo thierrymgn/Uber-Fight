@@ -1,22 +1,5 @@
-export {
-  sendLog,
-  sendBatchLogs,
-  logInfo,
-  logWarn,
-  logError,
-  logDebug,
-} from "./logger";
+export { sendLog, sendBatchLogs, logInfo, logWarn, logError, logDebug } from './logger';
 
-export {
-  logFirebaseError,
-  logPerformance,
-  withPerformanceLogging,
-} from "./helpers";
+export { logFirebaseError, logPerformance, withPerformanceLogging } from './helpers';
 
-export type {
-  LogLevel,
-  LogEntry,
-  LogAttributeValue,
-  GrafanaConfig,
-  FirebaseError,
-} from "./types";
+export type { LogLevel, LogEntry, LogAttributeValue, GrafanaConfig, FirebaseError } from './types';

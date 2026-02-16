@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { sendLog } from "@/lib/grafana/logger";
-import type { LogLevel, LogAttributeValue } from "@/lib/grafana/types";
+import { NextRequest, NextResponse } from 'next/server';
+import { sendLog } from '@/lib/grafana/logger';
+import type { LogLevel, LogAttributeValue } from '@/lib/grafana/types';
 
 interface LogRequestBody {
   level: LogLevel;
@@ -8,27 +8,27 @@ interface LogRequestBody {
   attributes?: Record<string, LogAttributeValue>;
 }
 
-const ALLOWED_LEVELS: LogLevel[] = ["info", "warn", "error", "debug"];
+const ALLOWED_LEVELS: LogLevel[] = ['info', 'warn', 'error', 'debug'];
 
 function validateRequestBody(body: unknown): LogRequestBody | null {
-  if (!body || typeof body !== "object") {
+  if (!body || typeof body !== 'object') {
     return null;
   }
 
   const data = body as Record<string, unknown>;
 
-  if (typeof data.message !== "string" || data.message.trim().length === 0) {
+  if (typeof data.message !== 'string' || data.message.trim().length === 0) {
     return null;
   }
 
-  const level = (data.level as LogLevel) || "info";
+  const level = (data.level as LogLevel) || 'info';
   if (!ALLOWED_LEVELS.includes(level)) {
     return null;
   }
 
   let attributes: Record<string, LogAttributeValue> | undefined;
   if (data.attributes !== undefined) {
-    if (typeof data.attributes !== "object" || Array.isArray(data.attributes)) {
+    if (typeof data.attributes !== 'object' || Array.isArray(data.attributes)) {
       return null;
     }
     attributes = data.attributes as Record<string, LogAttributeValue>;
@@ -78,25 +78,25 @@ function checkRateLimit(ip: string): { allowed: boolean; remaining: number } {
 }
 
 const SENSITIVE_KEYS = [
-  "password",
-  "token",
-  "secret",
-  "apikey",
-  "api_key",
-  "authorization",
-  "auth",
-  "credit_card",
-  "creditcard",
-  "card_number",
-  "cardnumber",
-  "cvv",
-  "cvc",
-  "ssn",
-  "social_security",
-  "private_key",
-  "privatekey",
-  "access_token",
-  "refresh_token",
+  'password',
+  'token',
+  'secret',
+  'apikey',
+  'api_key',
+  'authorization',
+  'auth',
+  'credit_card',
+  'creditcard',
+  'card_number',
+  'cardnumber',
+  'cvv',
+  'cvc',
+  'ssn',
+  'social_security',
+  'private_key',
+  'privatekey',
+  'access_token',
+  'refresh_token',
 ];
 
 function sanitizeAttributes(
@@ -107,16 +107,16 @@ function sanitizeAttributes(
   const sanitized: Record<string, LogAttributeValue> = {};
 
   for (const [key, value] of Object.entries(attributes)) {
-    const lowerKey = key.toLowerCase().replace(/[-_]/g, "");
+    const lowerKey = key.toLowerCase().replace(/[-_]/g, '');
 
     const isSensitive = SENSITIVE_KEYS.some((sensitive) =>
-      lowerKey.includes(sensitive.replace(/[-_]/g, ""))
+      lowerKey.includes(sensitive.replace(/[-_]/g, ''))
     );
 
     if (isSensitive) {
-      sanitized[key] = "[REDACTED]";
-    } else if (typeof value === "string" && value.length > 500) {
-      sanitized[key] = value.substring(0, 500) + "...[truncated]";
+      sanitized[key] = '[REDACTED]';
+    } else if (typeof value === 'string' && value.length > 500) {
+      sanitized[key] = value.substring(0, 500) + '...[truncated]';
     } else {
       sanitized[key] = value;
     }
@@ -126,22 +126,22 @@ function sanitizeAttributes(
 }
 
 function getClientIP(request: NextRequest): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
+  const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
-    return forwardedFor.split(",")[0].trim();
+    return forwardedFor.split(',')[0].trim();
   }
 
-  const realIP = request.headers.get("x-real-ip");
+  const realIP = request.headers.get('x-real-ip');
   if (realIP) {
     return realIP;
   }
 
-  const vercelForwardedFor = request.headers.get("x-vercel-forwarded-for");
+  const vercelForwardedFor = request.headers.get('x-vercel-forwarded-for');
   if (vercelForwardedFor) {
     return vercelForwardedFor;
   }
 
-  return "unknown";
+  return 'unknown';
 }
 
 // ============================================================================
@@ -157,14 +157,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Rate limit exceeded. Maximum 100 logs per minute.",
+          error: 'Rate limit exceeded. Maximum 100 logs per minute.',
         },
         {
           status: 429,
           headers: {
-            "X-RateLimit-Limit": String(RATE_LIMIT.maxRequests),
-            "X-RateLimit-Remaining": "0",
-            "Retry-After": "60",
+            'X-RateLimit-Limit': String(RATE_LIMIT.maxRequests),
+            'X-RateLimit-Remaining': '0',
+            'Retry-After': '60',
           },
         }
       );
@@ -174,10 +174,7 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json(
-        { success: false, error: "Invalid JSON body" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
     }
 
     const validatedBody = validateRequestBody(body);
@@ -196,34 +193,29 @@ export async function POST(request: NextRequest) {
 
     const enrichedAttributes: Record<string, LogAttributeValue> = {
       ...sanitizedAttributes,
-      source: "client",
+      source: 'client',
       clientIP,
-      userAgent: request.headers.get("user-agent") || "unknown",
+      userAgent: request.headers.get('user-agent') || 'unknown',
       timestamp: new Date().toISOString(),
     };
 
-    sendLog(validatedBody.message, validatedBody.level, enrichedAttributes).catch(
-      (error) => {
-        console.error("[API/logs] Failed to send log to Grafana:", error);
-      }
-    );
+    sendLog(validatedBody.message, validatedBody.level, enrichedAttributes).catch((error) => {
+      console.error('[API/logs] Failed to send log to Grafana:', error);
+    });
 
     return NextResponse.json(
-      { success: true, message: "Log received" },
+      { success: true, message: 'Log received' },
       {
         status: 200,
         headers: {
-          "X-RateLimit-Limit": String(RATE_LIMIT.maxRequests),
-          "X-RateLimit-Remaining": String(rateLimit.remaining),
+          'X-RateLimit-Limit': String(RATE_LIMIT.maxRequests),
+          'X-RateLimit-Remaining': String(rateLimit.remaining),
         },
       }
     );
   } catch (error) {
-    console.error("[API/logs] Unexpected error:", error);
+    console.error('[API/logs] Unexpected error:', error);
 
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

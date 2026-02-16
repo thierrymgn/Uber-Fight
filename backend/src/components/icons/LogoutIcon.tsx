@@ -1,4 +1,4 @@
-export function LogoutIcon({ className = "w-5 h-5" }: { className?: string }) {
+export function LogoutIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -16,4 +16,3 @@ export function LogoutIcon({ className = "w-5 h-5" }: { className?: string }) {
     </svg>
   );
 }
-

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * Error Boundary React to capture unhandled errors.
@@ -12,9 +12,9 @@
  * </ErrorBoundary>
  */
 
-import { Component, ErrorInfo, ReactNode } from "react";
-import { clientLog } from "@/hooks/useLogger";
-import { Button } from "@/components/ui/button";
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { clientLog } from '@/hooks/useLogger';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -22,8 +22,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { AlertCircle, RefreshCw, RotateCcw, ChevronDown } from "lucide-react";
+} from '@/components/ui/card';
+import { AlertCircle, RefreshCw, RotateCcw, ChevronDown } from 'lucide-react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -63,19 +63,19 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   private async logError(error: Error, errorInfo: ErrorInfo): Promise<void> {
     try {
-      await clientLog(`[ErrorBoundary] ${error.name}: ${error.message}`, "error", {
+      await clientLog(`[ErrorBoundary] ${error.name}: ${error.message}`, 'error', {
         errorName: error.name,
         errorMessage: error.message,
         stack: error.stack?.substring(0, 1000),
         componentStack: errorInfo.componentStack?.substring(0, 1000),
-        route: typeof window !== "undefined" ? window.location.pathname : undefined,
-        url: typeof window !== "undefined" ? window.location.href : undefined,
-        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        route: typeof window !== 'undefined' ? window.location.pathname : undefined,
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
         timestamp: new Date().toISOString(),
-        category: "react_error_boundary",
+        category: 'react_error_boundary',
       });
     } catch (logError) {
-      console.error("[ErrorBoundary] Failed to send error log:", logError);
+      console.error('[ErrorBoundary] Failed to send error log:', logError);
     }
   }
 
@@ -88,7 +88,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   private handleReload = (): void => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.location.reload();
     }
   };
@@ -117,7 +117,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {process.env.NODE_ENV === "development" && error && (
+              {process.env.NODE_ENV === 'development' && error && (
                 <details className="group rounded-lg border bg-muted/50 p-3">
                   <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                     <span>Détails de l&apos;erreur (dev only)</span>
@@ -125,7 +125,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   </summary>
                   <pre className="mt-3 overflow-x-auto rounded-md bg-destructive/5 p-3 text-xs text-destructive whitespace-pre-wrap wrap-break-word">
                     <strong>{error.name}:</strong> {error.message}
-                    {"\n\n"}
+                    {'\n\n'}
                     {error.stack}
                   </pre>
                 </details>
@@ -133,18 +133,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </CardContent>
 
             <CardFooter className="flex flex-col sm:flex-row gap-3 pt-2">
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto"
-                onClick={this.handleReset}
-              >
+              <Button variant="outline" className="w-full sm:w-auto" onClick={this.handleReset}>
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Réessayer
               </Button>
-              <Button
-                className="w-full sm:w-auto"
-                onClick={this.handleReload}
-              >
+              <Button className="w-full sm:w-auto" onClick={this.handleReload}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Recharger la page
               </Button>
