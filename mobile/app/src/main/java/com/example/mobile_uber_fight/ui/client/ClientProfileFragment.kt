@@ -49,13 +49,19 @@ class ClientProfileFragment : Fragment() {
             onSuccess = { user ->
                 if (user != null) {
                     currentUsername = user.username
-                    binding.tvFullName.text = if (currentUsername.isNotEmpty()) {
-                        currentUsername
-                    } else {
+                    binding.tvFullName.text = currentUsername.ifEmpty {
                         "-"
                     }
+
+                    val roleText = when (user.role.uppercase()) {
+                        "CLIENT" -> "Statut: Client"
+                        "FIGHTER" -> "Statut: Bagarreur"
+                        else -> "Statut: ${user.role}"
+                    }
+                    binding.tvStatus.text = roleText
                 } else {
                     binding.tvFullName.text = "-"
+                    binding.tvStatus.text = "Statut: -"
                 }
             },
             onFailure = { e ->
@@ -65,6 +71,7 @@ class ClientProfileFragment : Fragment() {
                     Toast.LENGTH_SHORT
                 ).show()
                 binding.tvFullName.text = "-"
+                binding.tvStatus.text = "Statut: -"
             }
         )
     }
