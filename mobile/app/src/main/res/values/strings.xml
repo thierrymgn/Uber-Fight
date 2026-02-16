@@ -63,4 +63,15 @@
     <!-- Profile Strings -->
     <string name="statut_client">Statut: Client</string>
     <string name="statut_bagarreur">Statut: Bagarreur</string>
+
+    <!-- Accessibility Strings -->
+    <string name="statut_utilisateur">Statut de l\'utilisateur</string>
+    <string name="icone_modifier">Icône modifier</string>
+    <string name="icone_parametres">Icône paramètres</string>
+    <string name="champ_username">Champ pour saisir le nom d\'utilisateur</string>
+    <string name="champ_email">Champ pour saisir l\'adresse email</string>
+    <string name="champ_ancien_mot_de_passe">Champ pour saisir l\'ancien mot de passe</string>
+    <string name="champ_nouveau_mot_de_passe">Champ pour saisir le nouveau mot de passe</string>
+    <string name="champ_confirmer_mot_de_passe">Champ pour confirmer le nouveau mot de passe</string>
+    <string name="afficher_masquer_mot_de_passe">Afficher ou masquer le mot de passe</string>
 </resources>

@@ -13,20 +13,26 @@
             android:layout_height="wrap_content"
             android:text="@string/modifier_le_profil"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp"
+            android:importantForAccessibility="yes"
+            android:accessibilityHeading="true"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/username"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:importantForAccessibility="no">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etUsername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapWords" />
+                android:inputType="textCapWords"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/champ_username"
+                android:minHeight="48dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -35,13 +41,17 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="@string/email"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:importantForAccessibility="no">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress" />
+                android:inputType="textEmailAddress"
+                android:importantForAccessibility="yes"
+                android:contentDescription="@string/champ_email"
+                android:minHeight="48dp" />
         </com.google.android.material.textfield.TextInputLayout>
 
     </LinearLayout>

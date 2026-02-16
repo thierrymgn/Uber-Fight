@@ -55,10 +55,12 @@ class ClientProfileFragment : Fragment() {
                     binding.tvFullName.text = currentUsername.ifEmpty {
                         "-"
                     }
+                    binding.tvFullName.contentDescription = "Nom d'utilisateur : ${currentUsername.ifEmpty { "non défini" }}"
 
                     binding.tvEmail.text = user.email.ifEmpty {
                         "-"
                     }
+                    binding.tvEmail.contentDescription = "Email : ${user.email.ifEmpty { "non défini" }}"
 
                     val roleText = when (user.role.uppercase()) {
                         "CLIENT" -> "Statut: Client"
@@ -66,10 +68,14 @@ class ClientProfileFragment : Fragment() {
                         else -> "Statut: ${user.role}"
                     }
                     binding.tvStatus.text = roleText
+                    binding.tvStatus.contentDescription = roleText
                 } else {
                     binding.tvFullName.text = "-"
+                    binding.tvFullName.contentDescription = "Nom d'utilisateur : non défini"
                     binding.tvEmail.text = "-"
+                    binding.tvEmail.contentDescription = "Email : non défini"
                     binding.tvStatus.text = "Statut: -"
+                    binding.tvStatus.contentDescription = "Statut : non défini"
                 }
             },
             onFailure = { e ->
@@ -79,8 +85,11 @@ class ClientProfileFragment : Fragment() {
                     Toast.LENGTH_SHORT
                 ).show()
                 binding.tvFullName.text = "-"
+                binding.tvFullName.contentDescription = "Nom d'utilisateur : non défini"
                 binding.tvEmail.text = "-"
+                binding.tvEmail.contentDescription = "Email : non défini"
                 binding.tvStatus.text = "Statut: -"
+                binding.tvStatus.contentDescription = "Statut : non défini"
             }
         )
     }
@@ -98,20 +107,27 @@ class ClientProfileFragment : Fragment() {
             .create()
 
         dialog.setOnShowListener {
+            // Améliorer l'accessibilité : focus sur le premier champ
+            dialogBinding.etUsername.requestFocus()
+            dialogBinding.etUsername.announceForAccessibility(getString(R.string.modifier_le_profil))
+
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val username = dialogBinding.etUsername.text.toString().trim()
                 val email = dialogBinding.etEmail.text.toString().trim()
 
                 if (username.isEmpty() || email.isEmpty()) {
+                    val errorMessage = getString(R.string.veuillez_remplir_tous_les_champs)
                     Toast.makeText(
                         requireContext(),
-                        getString(R.string.veuillez_remplir_tous_les_champs),
+                        errorMessage,
                         Toast.LENGTH_SHORT
                     ).show()
+                    dialogBinding.root.announceForAccessibility(errorMessage)
                     return@setOnClickListener
                 }
                 if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                     dialogBinding.tilEmail.error = "Email invalide"
+                    dialogBinding.etEmail.announceForAccessibility("Email invalide")
                     return@setOnClickListener
                 }
 
@@ -131,20 +147,26 @@ class ClientProfileFragment : Fragment() {
                 currentUsername = username
                 currentEmail = email
                 binding.tvFullName.text = username
+                binding.tvFullName.contentDescription = "Nom d'utilisateur : $username"
                 binding.tvEmail.text = email
+                binding.tvEmail.contentDescription = "Email : $email"
+                val successMessage = getString(R.string.profil_mis_a_jour)
                 Toast.makeText(
                     requireContext(),
-                    getString(R.string.profil_mis_a_jour),
+                    successMessage,
                     Toast.LENGTH_SHORT
                 ).show()
+                binding.root.announceForAccessibility(successMessage)
                 dialog.dismiss()
             },
             onFailure = { e: Exception ->
+                val errorMessage = "${getString(R.string.erreur_mise_a_jour_profil)}: ${e.message}"
                 Toast.makeText(
                     requireContext(),
-                    "${getString(R.string.erreur_mise_a_jour_profil)}: ${e.message}",
+                    errorMessage,
                     Toast.LENGTH_SHORT
                 ).show()
+                dialog.window?.decorView?.announceForAccessibility(errorMessage)
             }
         )
     }

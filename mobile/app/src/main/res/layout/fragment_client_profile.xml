@@ -15,6 +15,8 @@
             android:layout_marginTop="48dp"
             android:text="@string/profil"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
+            android:importantForAccessibility="yes"
+            android:accessibilityHeading="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -41,7 +43,9 @@
                     android:layout_height="wrap_content"
                     android:text="Statut: Client"
                     android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_marginBottom="16dp"
+                    android:importantForAccessibility="yes"
+                    android:contentDescription="@string/statut_utilisateur" />
 
                 <TextView
                     android:id="@+id/tvLabelName"
@@ -50,7 +54,9 @@
                     android:text="@string/username"
                     android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                     android:textColor="?attr/colorOnSurfaceVariant"
-                    android:layout_marginTop="8dp" />
+                    android:layout_marginTop="8dp"
+                    android:labelFor="@id/tvFullName"
+                    android:importantForAccessibility="yes" />
 
                 <TextView
                     android:id="@+id/tvFullName"
@@ -58,7 +64,8 @@
                     android:layout_height="wrap_content"
                     android:text="-"
                     android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                    android:layout_marginTop="4dp" />
+                    android:layout_marginTop="4dp"
+                    android:importantForAccessibility="yes" />
 
                 <TextView
                     android:id="@+id/tvLabelEmail"
@@ -67,7 +74,9 @@
                     android:text="Email"
                     android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                     android:textColor="?attr/colorOnSurfaceVariant"
-                    android:layout_marginTop="16dp" />
+                    android:layout_marginTop="16dp"
+                    android:labelFor="@id/tvEmail"
+                    android:importantForAccessibility="yes" />
 
                 <TextView
                     android:id="@+id/tvEmail"
@@ -75,7 +84,8 @@
                     android:layout_height="wrap_content"
                     android:text="-"
                     android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                    android:layout_marginTop="4dp" />
+                    android:layout_marginTop="4dp"
+                    android:importantForAccessibility="yes" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -88,6 +98,8 @@
             android:layout_marginHorizontal="24dp"
             android:layout_marginTop="24dp"
             android:text="@string/modifier_le_profil"
+            android:contentDescription="@string/modifier_le_profil"
+            android:importantForAccessibility="yes"
             app:icon="@android:drawable/ic_menu_edit"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -101,6 +113,8 @@
             android:layout_marginHorizontal="24dp"
             android:layout_marginTop="16dp"
             android:text="@string/parametres"
+            android:contentDescription="@string/parametres"
+            android:importantForAccessibility="yes"
             app:icon="@drawable/ic_settings"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
