@@ -1,15 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import { Users, Swords, Star, TrendingUp, BarChart3, Activity } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState, useCallback } from 'react';
+import { Users, Swords, Star, TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -17,53 +11,48 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis } from "recharts";
-import type {
-  DashboardStats,
-  UserChartData,
-  FightChartData,
-  FightStatus,
-} from "@/types/dashboard";
-import { FIGHT_STATUS_LABELS, CHART_COLORS } from "@/types/dashboard";
-import { useAuth } from "@/components/providers/auth-provider";
-import useLogger from "@/hooks/useLogger";
-import { GrafanaEmbed } from "@/components/grafana/grafana-embed";
+} from '@/components/ui/chart';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis } from 'recharts';
+import type { DashboardStats, UserChartData, FightChartData, FightStatus } from '@/types/dashboard';
+import { FIGHT_STATUS_LABELS, CHART_COLORS } from '@/types/dashboard';
+import { useAuth } from '@/components/providers/auth-provider';
+import useLogger from '@/hooks/useLogger';
+import { GrafanaEmbed } from '@/components/grafana/grafana-embed';
 
 const userChartConfig: ChartConfig = {
   clients: {
-    label: "Clients",
+    label: 'Clients',
     color: CHART_COLORS.client,
   },
   fighters: {
-    label: "Bagarreurs",
+    label: 'Bagarreurs',
     color: CHART_COLORS.fighter,
   },
 } satisfies ChartConfig;
 
 const fightChartConfig: ChartConfig = {
   completed: {
-    label: "Terminés",
+    label: 'Terminés',
     color: CHART_COLORS.completed,
   },
   cancelled: {
-    label: "Annulés",
+    label: 'Annulés',
     color: CHART_COLORS.cancelled,
   },
   pending: {
-    label: "En attente",
+    label: 'En attente',
     color: CHART_COLORS.pending,
   },
   inProgress: {
-    label: "En cours",
+    label: 'En cours',
     color: CHART_COLORS.inProgress,
   },
 } satisfies ChartConfig;
@@ -85,9 +74,7 @@ function KPICard({ title, value, description, icon, trend }: KPICardProps) {
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        )}
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
         {trend && (
           <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
             <TrendingUp className="h-3 w-3" />
@@ -128,17 +115,8 @@ function UserDistributionChart({ data }: UserDistributionChartProps) {
       <CardContent>
         <ChartContainer config={userChartConfig} className="mx-auto aspect-square max-h-64">
           <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={60}
-              strokeWidth={5}
-            >
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            <Pie data={data} dataKey="value" nameKey="name" innerRadius={60} strokeWidth={5}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
@@ -148,10 +126,7 @@ function UserDistributionChart({ data }: UserDistributionChartProps) {
         <div className="flex justify-center gap-4 mt-4">
           {data.map((item) => (
             <div key={item.name} className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: item.fill }}
-              />
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.fill }} />
               <span className="text-sm text-muted-foreground">
                 {userChartConfig[item.name]?.label}: {item.value}
               </span>
@@ -193,10 +168,7 @@ function FightStatusChart({ data }: FightStatusChartProps) {
           <BarChart data={data} layout="vertical">
             <XAxis type="number" />
             <YAxis dataKey="status" type="category" width={80} />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent />}
-            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <Bar dataKey="count" radius={[0, 4, 4, 0]}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -231,20 +203,22 @@ function BarChartSkeleton() {
 }
 
 interface RecentFightsTableProps {
-  fights: DashboardStats["recentFights"];
+  fights: DashboardStats['recentFights'];
 }
 
-function getStatusBadgeVariant(status: FightStatus): "default" | "secondary" | "destructive" | "outline" {
+function getStatusBadgeVariant(
+  status: FightStatus
+): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (status) {
-    case "COMPLETED":
-      return "default";
-    case "CANCELLED":
-      return "destructive";
-    case "IN_PROGRESS":
-      return "secondary";
-    case "PENDING":
+    case 'COMPLETED':
+      return 'default';
+    case 'CANCELLED':
+      return 'destructive';
+    case 'IN_PROGRESS':
+      return 'secondary';
+    case 'PENDING':
     default:
-      return "outline";
+      return 'outline';
   }
 }
 
@@ -278,12 +252,12 @@ function RecentFightsTable({ fights }: RecentFightsTableProps) {
                 <TableRow key={fight.id}>
                   <TableCell className="font-medium">{fight.clientName}</TableCell>
                   <TableCell>{fight.fighterName}</TableCell>
-                  <TableCell>{fight.location || "Non spécifié"}</TableCell>
+                  <TableCell>{fight.location || 'Non spécifié'}</TableCell>
                   <TableCell>
-                    {new Date(fight.createdAt).toLocaleDateString("fr-FR", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
+                    {new Date(fight.createdAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
                     })}
                   </TableCell>
                   <TableCell>
@@ -337,7 +311,7 @@ function useDashboardStats() {
 
   const fetchStats = useCallback(async () => {
     if (!user) {
-      setError("Vous devez être connecté pour accéder au dashboard");
+      setError('Vous devez être connecté pour accéder au dashboard');
       setIsLoading(false);
       return;
     }
@@ -348,18 +322,18 @@ function useDashboardStats() {
 
       const idToken = await user.getIdToken();
 
-      const response = await fetch("/api/dashboard/stats", {
+      const response = await fetch('/api/dashboard/stats', {
         headers: {
           Authorization: `Bearer ${idToken}`,
         },
       });
 
       if (response.status === 401) {
-        throw new Error("Session expirée - Veuillez vous reconnecter");
+        throw new Error('Session expirée - Veuillez vous reconnecter');
       }
 
       if (response.status === 403) {
-        throw new Error("Accès non autorisé - Droits administrateur requis");
+        throw new Error('Accès non autorisé - Droits administrateur requis');
       }
 
       if (!response.ok) {
@@ -370,8 +344,10 @@ function useDashboardStats() {
       const stats: DashboardStats = await response.json();
       setData(stats);
     } catch (err) {
-      logError("Failed to fetch dashboard stats", { error: err instanceof Error ? err.message : String(err) });
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      logError('Failed to fetch dashboard stats', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setIsLoading(false);
     }
@@ -384,40 +360,42 @@ function useDashboardStats() {
   return { data, isLoading, error };
 }
 
-function transformUserData(distribution: DashboardStats["userDistribution"]): UserChartData[] {
+function transformUserData(distribution: DashboardStats['userDistribution']): UserChartData[] {
   return [
     {
-      name: "clients",
+      name: 'clients',
       value: distribution.clients,
       fill: CHART_COLORS.client,
     },
     {
-      name: "fighters",
+      name: 'fighters',
       value: distribution.fighters,
       fill: CHART_COLORS.fighter,
     },
   ];
 }
 
-function transformFightData(distribution: DashboardStats["fightStatusDistribution"]): FightChartData[] {
+function transformFightData(
+  distribution: DashboardStats['fightStatusDistribution']
+): FightChartData[] {
   return [
     {
-      status: "Terminés",
+      status: 'Terminés',
       count: distribution.completed,
       fill: CHART_COLORS.completed,
     },
     {
-      status: "Annulés",
+      status: 'Annulés',
       count: distribution.cancelled,
       fill: CHART_COLORS.cancelled,
     },
     {
-      status: "En attente",
+      status: 'En attente',
       count: distribution.pending,
       fill: CHART_COLORS.pending,
     },
     {
-      status: "En cours",
+      status: 'En cours',
       count: distribution.inProgress,
       fill: CHART_COLORS.inProgress,
     },
@@ -448,9 +426,7 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Vue d&apos;ensemble de la plateforme Uber Fight
-            </p>
+            <p className="text-muted-foreground">Vue d&apos;ensemble de la plateforme Uber Fight</p>
           </div>
 
           {/* KPI Cards Skeleton */}
@@ -478,7 +454,7 @@ export default function DashboardPage() {
 
   const grafanaDashboardUrl = process.env.NEXT_PUBLIC_GRAFANA_DASHBOARD_URL;
 
-  console.log("Dashboard stats loaded:", grafanaDashboardUrl);
+  console.log('Dashboard stats loaded:', grafanaDashboardUrl);
 
   return (
     <div className="p-6">
@@ -486,9 +462,7 @@ export default function DashboardPage() {
         {/* En-tête */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Vue d&apos;ensemble de la plateforme Uber Fight
-          </p>
+          <p className="text-muted-foreground">Vue d&apos;ensemble de la plateforme Uber Fight</p>
         </div>
 
         {/* Tabs Navigation */}
@@ -522,7 +496,7 @@ export default function DashboardPage() {
               />
               <KPICard
                 title="Note Moyenne"
-                value={data?.averageRating ? `${data.averageRating}/5` : "N/A"}
+                value={data?.averageRating ? `${data.averageRating}/5` : 'N/A'}
                 description="Note moyenne des bagarreurs"
                 icon={<Star className="h-5 w-5" />}
               />

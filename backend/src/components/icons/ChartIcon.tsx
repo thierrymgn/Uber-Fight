@@ -1,4 +1,4 @@
-export function ChartIcon({ className = "w-5 h-5" }: { className?: string }) {
+export function ChartIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -16,5 +16,3 @@ export function ChartIcon({ className = "w-5 h-5" }: { className?: string }) {
     </svg>
   );
 }
-
-

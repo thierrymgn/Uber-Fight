@@ -1,27 +1,26 @@
-import { NextResponse } from "next/server";
-import { getAdminFirestore } from "@/lib/firebase-admin";
-import { verifyAuth } from "@/lib/auth-admin";
+import { NextResponse } from 'next/server';
+import { getAdminFirestore } from '@/lib/firebase-admin';
+import { verifyAuth } from '@/lib/auth-admin';
 import type {
   DashboardStats,
   UserDistribution,
   FightStatusDistribution,
   RecentFight,
   FightStatus,
-} from "@/types/dashboard";
-import { FirebaseError, logFirebaseError, withPerformanceLogging } from "@/lib/grafana";
-
+} from '@/types/dashboard';
+import { FirebaseError, logFirebaseError, withPerformanceLogging } from '@/lib/grafana';
 
 async function getUserDistribution(): Promise<UserDistribution> {
   const db = getAdminFirestore();
   let snapshot;
   try {
-    snapshot = await withPerformanceLogging("fetchAllUsers", async () => {
-      const usersRef = db.collection("users");
+    snapshot = await withPerformanceLogging('fetchAllUsers', async () => {
+      const usersRef = db.collection('users');
 
       return await usersRef.get();
     });
   } catch (error) {
-    logFirebaseError(error as FirebaseError, "fetchAllUsers", {});
+    logFirebaseError(error as FirebaseError, 'fetchAllUsers', {});
     return {
       clients: 0,
       fighters: 0,
@@ -34,9 +33,9 @@ async function getUserDistribution(): Promise<UserDistribution> {
 
   snapshot.docs.forEach((doc) => {
     const data = doc.data();
-    const role = data.role?.toUpperCase() || "CLIENT";
+    const role = data.role?.toUpperCase() || 'CLIENT';
 
-    if (role === "FIGHTER") {
+    if (role === 'FIGHTER') {
       fighters++;
     } else {
       clients++;
@@ -53,14 +52,14 @@ async function getUserDistribution(): Promise<UserDistribution> {
 async function getFightStatusDistribution(): Promise<FightStatusDistribution> {
   const db = getAdminFirestore();
   let snapshot;
-  
+
   try {
-    snapshot = await withPerformanceLogging("fetchAllFights", async () => {
-      const fightsRef = db.collection("fights");
+    snapshot = await withPerformanceLogging('fetchAllFights', async () => {
+      const fightsRef = db.collection('fights');
       return await fightsRef.get();
     });
   } catch (error) {
-    logFirebaseError(error as FirebaseError, "fetchAllFights", {});
+    logFirebaseError(error as FirebaseError, 'fetchAllFights', {});
     return {
       pending: 0,
       inProgress: 0,
@@ -80,19 +79,19 @@ async function getFightStatusDistribution(): Promise<FightStatusDistribution> {
 
   snapshot.docs.forEach((doc) => {
     const data = doc.data();
-    const status = (data.status?.toUpperCase() || "PENDING") as FightStatus;
+    const status = (data.status?.toUpperCase() || 'PENDING') as FightStatus;
 
     switch (status) {
-      case "PENDING":
+      case 'PENDING':
         distribution.pending++;
         break;
-      case "IN_PROGRESS":
+      case 'IN_PROGRESS':
         distribution.inProgress++;
         break;
-      case "COMPLETED":
+      case 'COMPLETED':
         distribution.completed++;
         break;
-      case "CANCELLED":
+      case 'CANCELLED':
         distribution.cancelled++;
         break;
     }
@@ -108,13 +107,15 @@ async function getAverageRating(): Promise<number> {
   let snapshot;
 
   try {
-    snapshot = await withPerformanceLogging("fetchAllUsersFilteredByFighter", async () => {
-      const usersRef = db.collection("users");
+    snapshot = await withPerformanceLogging('fetchAllUsersFilteredByFighter', async () => {
+      const usersRef = db.collection('users');
 
-      return await usersRef.where("role", "==", "FIGHTER").get();
+      return await usersRef.where('role', '==', 'FIGHTER').get();
     });
   } catch (error) {
-    logFirebaseError(error as FirebaseError, "fetchAllUsersFilteredByFighter", { filter: "role == FIGHTER" });
+    logFirebaseError(error as FirebaseError, 'fetchAllUsersFilteredByFighter', {
+      filter: 'role == FIGHTER',
+    });
     return 0;
   }
 
@@ -127,7 +128,7 @@ async function getAverageRating(): Promise<number> {
 
   snapshot.docs.forEach((doc) => {
     const data = doc.data();
-    if (typeof data.rating === "number" && data.rating > 0) {
+    if (typeof data.rating === 'number' && data.rating > 0) {
       totalRating += data.rating;
       ratedFighters++;
     }
@@ -144,12 +145,12 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
   const db = getAdminFirestore();
   let snapshot;
   try {
-    snapshot = await withPerformanceLogging("fetchRecentFights", async () => {
-      const fightsRef = db.collection("fights");
-      return await fightsRef.orderBy("createdAt", "desc").limit(limitCount).get();
+    snapshot = await withPerformanceLogging('fetchRecentFights', async () => {
+      const fightsRef = db.collection('fights');
+      return await fightsRef.orderBy('createdAt', 'desc').limit(limitCount).get();
     });
   } catch (error) {
-    logFirebaseError(error as FirebaseError, "fetchRecentFights", { limit: limitCount });
+    logFirebaseError(error as FirebaseError, 'fetchRecentFights', { limit: limitCount });
     return [];
   }
 
@@ -160,7 +161,7 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
 
     let locationString: string | undefined;
     if (data.location) {
-      if (typeof data.location === "string") {
+      if (typeof data.location === 'string') {
         locationString = data.location;
       } else if (data.location._latitude !== undefined && data.location._longitude !== undefined) {
         locationString = `${data.location._latitude.toFixed(4)}, ${data.location._longitude.toFixed(4)}`;
@@ -169,16 +170,13 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
       }
     }
 
-    const createdAtDate =
-      data.createdAt?.toDate?.() ??
-      doc.createTime?.toDate?.() ??
-      null;
+    const createdAtDate = data.createdAt?.toDate?.() ?? doc.createTime?.toDate?.() ?? null;
 
     fights.push({
       id: doc.id,
-      clientName: data.clientName || "Client inconnu",
-      fighterName: data.fighterName || "Bagarreur inconnu",
-      status: (data.status?.toUpperCase() || "PENDING") as FightStatus,
+      clientName: data.clientName || 'Client inconnu',
+      fighterName: data.fighterName || 'Bagarreur inconnu',
+      status: (data.status?.toUpperCase() || 'PENDING') as FightStatus,
       createdAt: createdAtDate ? createdAtDate.toISOString() : null,
       location: locationString,
     });
@@ -188,13 +186,10 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
 }
 
 export async function GET(request: Request) {
-  const authResult = await verifyAuth(request, ["ADMIN"]);
-  
+  const authResult = await verifyAuth(request, ['ADMIN']);
+
   if (!authResult.success) {
-    return NextResponse.json(
-      { error: authResult.error },
-      { status: authResult.status }
-    );
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status });
   }
 
   try {
@@ -215,12 +210,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json(stats, { status: 200 });
   } catch (error) {
-    console.error("Erreur lors de la récupération des stats dashboard:", error);
+    console.error('Erreur lors de la récupération des stats dashboard:', error);
 
     return NextResponse.json(
       {
-        error: "Erreur serveur lors de la récupération des statistiques",
-        details: error instanceof Error ? error.message : "Erreur inconnue",
+        error: 'Erreur serveur lors de la récupération des statistiques',
+        details: error instanceof Error ? error.message : 'Erreur inconnue',
       },
       { status: 500 }
     );

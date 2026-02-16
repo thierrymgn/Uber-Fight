@@ -1,26 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@/components/providers/auth-provider";
-import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Users,
-  Home,
-  LogOut,
-  ChevronLeft,
-  Swords,
-} from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/auth-provider';
+import { cn } from '@/lib/utils';
+import { LayoutDashboard, Users, Home, LogOut, ChevronLeft, Swords } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,23 +16,23 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+} from '@/components/ui/dropdown-menu';
+import { useState } from 'react';
 
 const navigationItems = [
   {
-    title: "Accueil",
-    href: "/",
+    title: 'Accueil',
+    href: '/',
     icon: Home,
   },
   {
-    title: "Dashboard",
-    href: "/dashboard",
+    title: 'Dashboard',
+    href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
-    title: "Utilisateurs",
-    href: "/utilisateurs",
+    title: 'Utilisateurs',
+    href: '/utilisateurs',
     icon: Users,
   },
 ];
@@ -62,15 +50,13 @@ function NavItem({ href, icon: Icon, title, isActive, isCollapsed }: NavItemProp
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-        "hover:bg-accent hover:text-accent-foreground",
-        isActive
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : "text-muted-foreground",
-        isCollapsed && "justify-center px-2"
+        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+        'hover:bg-accent hover:text-accent-foreground',
+        isActive ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground',
+        isCollapsed && 'justify-center px-2'
       )}
     >
-      <Icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary-foreground")} />
+      <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-primary-foreground')} />
       {!isCollapsed && <span>{title}</span>}
     </Link>
   );
@@ -98,9 +84,9 @@ export default function Sidebar() {
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/login");
+      router.push('/login');
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      console.error('Erreur lors de la déconnexion:', error);
     }
   };
 
@@ -112,26 +98,28 @@ export default function Sidebar() {
     <TooltipProvider>
       <aside
         className={cn(
-          "relative flex h-screen flex-col border-r bg-card transition-all duration-300",
-          isCollapsed ? "w-16" : "w-64"
+          'relative flex h-screen flex-col border-r bg-card transition-all duration-300',
+          isCollapsed ? 'w-16' : 'w-64'
         )}
       >
         {/* Bouton collapse */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
-            "absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm transition-transform hover:bg-accent",
-            isCollapsed && "rotate-180"
+            'absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm transition-transform hover:bg-accent',
+            isCollapsed && 'rotate-180'
           )}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
 
         {/* Logo */}
-        <div className={cn(
-          "flex shrink-0 items-center border-b p-4",
-          isCollapsed && "justify-center p-3"
-        )}>
+        <div
+          className={cn(
+            'flex shrink-0 items-center border-b p-4',
+            isCollapsed && 'justify-center p-3'
+          )}
+        >
           {isCollapsed ? (
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary shrink-0">
               <Swords className="h-6 w-6 text-primary-foreground" />
@@ -165,43 +153,35 @@ export default function Sidebar() {
         <Separator />
 
         {/* Section utilisateur */}
-        <div className={cn("p-3", isCollapsed && "flex justify-center")}>
+        <div className={cn('p-3', isCollapsed && 'flex justify-center')}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-accent",
-                  isCollapsed && "justify-center"
+                  'flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-accent',
+                  isCollapsed && 'justify-center'
                 )}
               >
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage src={user?.photoURL || undefined} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                    {user?.email ? getUserInitials(user.email) : "AD"}
+                    {user?.email ? getUserInitials(user.email) : 'AD'}
                   </AvatarFallback>
                 </Avatar>
                 {!isCollapsed && (
                   <div className="flex-1 overflow-hidden">
                     <p className="truncate text-sm font-medium">
-                      {user?.displayName || "Administrateur"}
+                      {user?.displayName || 'Administrateur'}
                     </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {user?.email}
-                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align={isCollapsed ? "center" : "end"}
-              side="top"
-              className="w-56"
-            >
+            <DropdownMenuContent align={isCollapsed ? 'center' : 'end'} side="top" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">
-                    {user?.displayName || "Administrateur"}
-                  </p>
+                  <p className="text-sm font-medium">{user?.displayName || 'Administrateur'}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>

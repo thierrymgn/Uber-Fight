@@ -1,6 +1,6 @@
-export type UserRole = "CLIENT" | "FIGHTER";
+export type UserRole = 'CLIENT' | 'FIGHTER';
 
-export type FightStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type FightStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export interface UserDistribution {
   clients: number;
@@ -45,17 +45,17 @@ export interface FightChartData {
 }
 
 export const FIGHT_STATUS_LABELS: Record<FightStatus, string> = {
-  PENDING: "En attente",
-  IN_PROGRESS: "En cours",
-  COMPLETED: "Terminé",
-  CANCELLED: "Annulé",
+  PENDING: 'En attente',
+  IN_PROGRESS: 'En cours',
+  COMPLETED: 'Terminé',
+  CANCELLED: 'Annulé',
 };
 
 export const CHART_COLORS = {
-  client: "hsl(221, 83%, 53%)", // Bleu
-  fighter: "hsl(0, 84%, 60%)", // Rouge
-  completed: "hsl(142, 71%, 45%)", // Vert
-  cancelled: "hsl(0, 84%, 60%)", // Rouge
-  pending: "hsl(38, 92%, 50%)", // Orange
-  inProgress: "hsl(221, 83%, 53%)", // Bleu
+  client: 'hsl(221, 83%, 53%)', // Bleu
+  fighter: 'hsl(0, 84%, 60%)', // Rouge
+  completed: 'hsl(142, 71%, 45%)', // Vert
+  cancelled: 'hsl(0, 84%, 60%)', // Rouge
+  pending: 'hsl(38, 92%, 50%)', // Orange
+  inProgress: 'hsl(221, 83%, 53%)', // Bleu
 } as const;

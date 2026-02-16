@@ -1,6 +1,6 @@
-export type LogLevel = "info" | "warn" | "error" | "debug";
+export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
-export type OTLPSeverity = "INFO" | "WARN" | "ERROR" | "DEBUG";
+export type OTLPSeverity = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
 
 export const SEVERITY_NUMBER: Record<LogLevel, number> = {
   debug: 5,
