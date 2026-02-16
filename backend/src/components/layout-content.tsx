@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from '@/components/sidebar';
@@ -14,22 +15,14 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
 
   const showSidebar = user && !isPublicPage;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user && !isPublicPage) {
-    if (typeof window !== 'undefined') {
+  useEffect(() => {
+    if (!loading && !user && !isPublicPage) {
       const redirectPath = encodeURIComponent(pathname || '/');
       router.push(`/login?redirect=${redirectPath}`);
     }
+  }, [loading, user, isPublicPage, pathname, router]);
+
+  if (loading || (!user && !isPublicPage)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="text-center">
