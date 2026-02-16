@@ -19,8 +19,7 @@ class ClientProfileFragment : Fragment() {
     private val binding get() = _binding!!
     private val userRepository = UserRepository()
 
-    private var currentFirstName: String = ""
-    private var currentLastName: String = ""
+    private var currentUsername: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,9 +48,7 @@ class ClientProfileFragment : Fragment() {
         userRepository.getCurrentUser(
             onSuccess = { user ->
                 if (user != null) {
-                    currentFirstName = user.firstName
-                    currentLastName = user.lastName
-                    updateUI()
+                    currentUsername = user.username
                 }
             },
             onFailure = { e ->
@@ -64,21 +61,10 @@ class ClientProfileFragment : Fragment() {
         )
     }
 
-    private fun updateUI() {
-        val fullName = if (currentFirstName.isNotEmpty() || currentLastName.isNotEmpty()) {
-            "$currentFirstName $currentLastName".trim()
-        } else {
-            "-"
-        }
-        binding.tvFullName.text = fullName
-    }
-
     private fun showEditProfileDialog() {
         val dialogBinding = DialogEditProfileBinding.inflate(layoutInflater)
-
-        // Pré-remplir avec les valeurs actuelles
-        dialogBinding.etFirstName.setText(currentFirstName)
-        dialogBinding.etLastName.setText(currentLastName)
+        
+        dialogBinding.etFirstName.setText(currentUsername)
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogBinding.root)
@@ -112,9 +98,7 @@ class ClientProfileFragment : Fragment() {
             firstName = firstName,
             lastName = lastName,
             onSuccess = {
-                currentFirstName = firstName
-                currentLastName = lastName
-                updateUI()
+                currentUsername = firstName
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.profil_mis_a_jour),
