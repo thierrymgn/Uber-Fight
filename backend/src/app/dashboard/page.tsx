@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, Swords, Star, TrendingUp } from "lucide-react";
+import { Users, Swords, Star, TrendingUp, BarChart3, Activity } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis } from "recharts";
 import type {
   DashboardStats,
@@ -35,6 +36,7 @@ import type {
 import { FIGHT_STATUS_LABELS, CHART_COLORS } from "@/types/dashboard";
 import { useAuth } from "@/components/providers/auth-provider";
 import useLogger from "@/hooks/useLogger";
+import { GrafanaEmbed } from "@/components/grafana/grafana-embed";
 
 const userChartConfig: ChartConfig = {
   clients: {
@@ -474,6 +476,10 @@ export default function DashboardPage() {
   const userChartData = data ? transformUserData(data.userDistribution) : [];
   const fightChartData = data ? transformFightData(data.fightStatusDistribution) : [];
 
+  const grafanaDashboardUrl = process.env.NEXT_PUBLIC_GRAFANA_DASHBOARD_URL;
+
+  console.log("Dashboard stats loaded:", grafanaDashboardUrl);
+
   return (
     <div className="p-6">
       <div className="space-y-6">
@@ -485,36 +491,62 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <KPICard
-            title="Total Utilisateurs"
-            value={data?.userDistribution.total ?? 0}
-            description={`${data?.userDistribution.clients ?? 0} clients, ${data?.userDistribution.fighters ?? 0} bagarreurs`}
-            icon={<Users className="h-5 w-5" />}
-          />
-          <KPICard
-            title="Total Combats"
-            value={data?.fightStatusDistribution.total ?? 0}
-            description={`${data?.fightStatusDistribution.completed ?? 0} terminés`}
-            icon={<Swords className="h-5 w-5" />}
-          />
-          <KPICard
-            title="Note Moyenne"
-            value={data?.averageRating ? `${data.averageRating}/5` : "N/A"}
-            description="Note moyenne des bagarreurs"
-            icon={<Star className="h-5 w-5" />}
-          />
-        </div>
+        {/* Tabs Navigation */}
+        <Tabs defaultValue="stats" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="stats" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Statistiques
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Monitoring
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Graphiques */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <UserDistributionChart data={userChartData} />
-          <FightStatusChart data={fightChartData} />
-        </div>
+          {/* Onglet Statistiques */}
+          <TabsContent value="stats" className="space-y-6 mt-6">
+            {/* KPI Cards */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <KPICard
+                title="Total Utilisateurs"
+                value={data?.userDistribution.total ?? 0}
+                description={`${data?.userDistribution.clients ?? 0} clients, ${data?.userDistribution.fighters ?? 0} bagarreurs`}
+                icon={<Users className="h-5 w-5" />}
+              />
+              <KPICard
+                title="Total Combats"
+                value={data?.fightStatusDistribution.total ?? 0}
+                description={`${data?.fightStatusDistribution.completed ?? 0} terminés`}
+                icon={<Swords className="h-5 w-5" />}
+              />
+              <KPICard
+                title="Note Moyenne"
+                value={data?.averageRating ? `${data.averageRating}/5` : "N/A"}
+                description="Note moyenne des bagarreurs"
+                icon={<Star className="h-5 w-5" />}
+              />
+            </div>
 
-        {/* Table des combats récents */}
-        {data && <RecentFightsTable fights={data.recentFights} />}
+            {/* Graphiques */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <UserDistributionChart data={userChartData} />
+              <FightStatusChart data={fightChartData} />
+            </div>
+
+            {/* Table des combats récents */}
+            {data && <RecentFightsTable fights={data.recentFights} />}
+          </TabsContent>
+
+          {/* Onglet Monitoring */}
+          <TabsContent value="monitoring" className="space-y-6 mt-6">
+            <GrafanaEmbed
+              dashboardUrl={grafanaDashboardUrl}
+              title="Monitoring Grafana"
+              description="Logs, métriques et performance de la plateforme en temps réel"
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
