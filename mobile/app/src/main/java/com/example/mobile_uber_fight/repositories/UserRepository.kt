@@ -2,6 +2,9 @@ package com.example.mobile_uber_fight.repositories
 
 import android.util.Log
 import com.example.mobile_uber_fight.models.User
+import com.example.mobile_uber_fight.models.UserSettings
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
@@ -89,52 +92,27 @@ class UserRepository {
             }
     }
 
-    fun getCurrentUser(onSuccess: (User?) -> Unit, onFailure: (Exception) -> Unit) {
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            db.collection("users").document(currentUser.uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val user = document.toObject(User::class.java)
-                        onSuccess(user)
-                    } else {
-                        onSuccess(null)
-                    }
-                }
-                .addOnFailureListener { e ->
-                    onFailure(e)
-                }
-        } else {
-            onSuccess(null)
+    fun createUser(user: User): Task<Void> {
+        return db.collection("users").document(user.uid).set(user).onSuccessTask {
+            val defaultSettings = UserSettings()
+            db.collection("userSettings").document(user.uid).set(defaultSettings)
         }
     }
 
-    fun updateUserProfile(
-        username: String,
-        email: String,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            val updates = hashMapOf<String, Any>(
-                "username" to username,
-                "email" to email
-            )
+    fun getCurrentUser(onSuccess: (User?) -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onFailure(Exception("User not logged in"))
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                onSuccess(document.toObject(User::class.java))
+            }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
 
-            db.collection("users").document(currentUser.uid)
-                .update(updates)
-                .addOnSuccessListener {
-                    Log.d("UserRepository", "User profile updated successfully.")
-                    onSuccess()
-                }
-                .addOnFailureListener { e ->
-                    Log.w("UserRepository", "Error updating user profile", e)
-                    onFailure(e)
-                }
-        } else {
-            onFailure(Exception("No authenticated user found."))
-        }
+    fun updateUserProfile(username: String, email: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onFailure(Exception("User not logged in"))
+        db.collection("users").document(uid)
+            .update(mapOf("username" to username, "email" to email))
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
     }
 }

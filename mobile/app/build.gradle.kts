@@ -14,9 +14,7 @@ plugins {
 
 android {
     namespace = "com.example.mobile_uber_fight"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.mobile_uber_fight"
@@ -64,11 +62,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
     implementation(libs.places)
     implementation(libs.okhttp)
     implementation(libs.firebase.messaging)
+    implementation(libs.play.services.auth)
 }
