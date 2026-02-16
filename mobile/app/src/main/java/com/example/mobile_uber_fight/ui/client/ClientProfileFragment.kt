@@ -53,6 +53,10 @@ class ClientProfileFragment : Fragment() {
                         "-"
                     }
 
+                    binding.tvEmail.text = user.email.ifEmpty {
+                        "-"
+                    }
+
                     val roleText = when (user.role.uppercase()) {
                         "CLIENT" -> "Statut: Client"
                         "FIGHTER" -> "Statut: Bagarreur"
@@ -61,6 +65,7 @@ class ClientProfileFragment : Fragment() {
                     binding.tvStatus.text = roleText
                 } else {
                     binding.tvFullName.text = "-"
+                    binding.tvEmail.text = "-"
                     binding.tvStatus.text = "Statut: -"
                 }
             },
@@ -71,6 +76,7 @@ class ClientProfileFragment : Fragment() {
                     Toast.LENGTH_SHORT
                 ).show()
                 binding.tvFullName.text = "-"
+                binding.tvEmail.text = "-"
                 binding.tvStatus.text = "Statut: -"
             }
         )
