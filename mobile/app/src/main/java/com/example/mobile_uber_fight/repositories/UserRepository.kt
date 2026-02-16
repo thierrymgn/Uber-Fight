@@ -112,6 +112,7 @@ class UserRepository {
 
     fun updateUserProfile(
         username: String,
+        email: String,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
@@ -119,6 +120,7 @@ class UserRepository {
         if (currentUser != null) {
             val updates = hashMapOf<String, Any>(
                 "username" to username,
+                "email" to email
             )
 
             db.collection("users").document(currentUser.uid)

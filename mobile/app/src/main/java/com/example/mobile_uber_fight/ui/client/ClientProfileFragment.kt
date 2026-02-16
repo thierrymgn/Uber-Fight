@@ -21,6 +21,8 @@ class ClientProfileFragment : Fragment() {
 
     private var currentUsername: String = ""
 
+    private var currentEmail: String = ""
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -49,6 +51,7 @@ class ClientProfileFragment : Fragment() {
             onSuccess = { user ->
                 if (user != null) {
                     currentUsername = user.username
+                    currentEmail = user.email
                     binding.tvFullName.text = currentUsername.ifEmpty {
                         "-"
                     }
@@ -86,6 +89,7 @@ class ClientProfileFragment : Fragment() {
         val dialogBinding = DialogEditProfileBinding.inflate(layoutInflater)
         
         dialogBinding.etUsername.setText(currentUsername)
+        dialogBinding.etEmail.setText(currentEmail)
 
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogBinding.root)
@@ -96,8 +100,9 @@ class ClientProfileFragment : Fragment() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val username = dialogBinding.etUsername.text.toString().trim()
+                val email = dialogBinding.etEmail.text.toString().trim()
 
-                if (username.isEmpty()) {
+                if (username.isEmpty() || email.isEmpty()) {
                     Toast.makeText(
                         requireContext(),
                         getString(R.string.veuillez_remplir_tous_les_champs),
@@ -105,20 +110,28 @@ class ClientProfileFragment : Fragment() {
                     ).show()
                     return@setOnClickListener
                 }
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    dialogBinding.tilEmail.error = "Email invalide"
+                    return@setOnClickListener
+                }
 
-                updateProfile(username, dialog)
+                dialogBinding.tilEmail.error = null
+                updateProfile(username, email, dialog)
             }
         }
 
         dialog.show()
     }
 
-    private fun updateProfile(username: String, dialog: AlertDialog) {
+    private fun updateProfile(username: String, email: String, dialog: AlertDialog) {
         userRepository.updateUserProfile(
             username = username,
+            email = email,
             onSuccess = {
                 currentUsername = username
+                currentEmail = email
                 binding.tvFullName.text = username
+                binding.tvEmail.text = email
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.profil_mis_a_jour),
