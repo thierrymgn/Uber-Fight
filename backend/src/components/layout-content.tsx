@@ -34,9 +34,11 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900">
       {showSidebar && <Sidebar />}
-      <main className={showSidebar ? 'flex-1' : 'w-full'}>{children}</main>
+      <main className={showSidebar ? 'flex-1 overflow-y-auto' : 'w-full overflow-y-auto'}>
+        {children}
+      </main>
     </div>
   );
 }
