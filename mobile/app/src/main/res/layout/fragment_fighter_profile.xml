@@ -13,7 +13,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="48dp"
-            android:text="Mon Profil de Bagarreur"
+            android:text="@string/profil"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -46,7 +46,7 @@
                     android:id="@+id/tvLabelName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nom et Prénom"
+                    android:text="@string/username"
                     android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_marginTop="8dp" />
