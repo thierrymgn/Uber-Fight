@@ -3,7 +3,9 @@ package com.example.mobile_uber_fight.ui.fighter
 import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Patterns
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -15,63 +17,65 @@ import com.example.mobile_uber_fight.databinding.FragmentFighterProfileBinding
 class FighterProfileFragment : Fragment() {
 
     private var _binding: FragmentFighterProfileBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding
+
     private val userRepository = UserRepository()
 
     private var currentUsername: String = ""
     private var currentEmail: String = ""
 
-
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentFighterProfileBinding.inflate(inflater, container, false)
+        return binding!!.root
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         loadUserProfile()
 
-        binding.btnEditProfile.setOnClickListener {
+        binding?.btnEditProfile?.setOnClickListener {
             showEditProfileDialog()
         }
 
-        binding.btnSettings.setOnClickListener {
-            findNavController().navigate(R.id.action_fighterProfileFragment_to_settingsFragment)
+        binding?.btnSettings?.setOnClickListener {
+            findNavController().navigate(R.id.settingsFragment)
         }
     }
 
     private fun loadUserProfile() {
         userRepository.getCurrentUser(
             onSuccess = { user ->
+                if (_binding == null) return@getCurrentUser
                 if (user != null) {
                     currentUsername = user.username
                     currentEmail = user.email
-                    binding.tvFullName.text = currentUsername.ifEmpty {
-                        "-"
-                    }
-
-                    binding.tvEmail.text = user.email.ifEmpty {
-                        "-"
-                    }
+                    binding?.tvFullName?.text = currentUsername.ifEmpty { "-" }
+                    binding?.tvEmail?.text = user.email.ifEmpty { "-" }
 
                     val roleText = when (user.role.uppercase()) {
                         "CLIENT" -> "Statut: Client"
                         "FIGHTER" -> "Statut: Bagarreur"
                         else -> "Statut: ${user.role}"
                     }
-                    binding.tvStatus.text = roleText
+                    binding?.tvStatus?.text = roleText
                 } else {
-                    binding.tvFullName.text = "-"
-                    binding.tvEmail.text = "-"
-                    binding.tvStatus.text = "Statut: -"
+                    binding?.tvFullName?.text = "-"
+                    binding?.tvEmail?.text = "-"
+                    binding?.tvStatus?.text = "Statut: -"
                 }
             },
             onFailure = { e ->
+                if (_binding == null) return@getCurrentUser
                 Toast.makeText(
                     requireContext(),
-                    getString(R.string.erreur_mise_a_jour_profil),
+                    "${getString(R.string.erreur_mise_a_jour_profil)}: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
-                binding.tvFullName.text = "-"
-                binding.tvEmail.text = "-"
-                binding.tvStatus.text = "Statut: -"
             }
         )
     }
@@ -120,10 +124,11 @@ class FighterProfileFragment : Fragment() {
             username = username,
             email = email,
             onSuccess = {
+                if (_binding == null) return@updateUserProfile
                 currentUsername = username
                 currentEmail = email
-                binding.tvFullName.text = username
-                binding.tvEmail.text = email
+                binding?.tvFullName?.text = username
+                binding?.tvEmail?.text = email
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.profil_mis_a_jour),
@@ -132,11 +137,15 @@ class FighterProfileFragment : Fragment() {
                 dialog.dismiss()
             },
             onFailure = { e: Exception ->
+                if (_binding == null) return@updateUserProfile
                 Toast.makeText(
                     requireContext(),
                     "${getString(R.string.erreur_mise_a_jour_profil)}: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
+                binding?.tvFullName?.text = "-"
+                binding?.tvEmail?.text = "-"
+                binding?.tvStatus?.text = "Statut: -"
             }
         )
     }
