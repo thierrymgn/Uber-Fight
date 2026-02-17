@@ -7,6 +7,7 @@ import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 
 class AuthRepository {
@@ -38,6 +39,28 @@ class AuthRepository {
                 }
             }
         }
+    }
+
+    fun firebaseAuthWithGoogle(idToken: String, onSuccess: (isNewUser: Boolean) -> Unit, onFailure: (Exception) -> Unit) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnSuccessListener { authResult ->
+                val user = authResult.user
+                if (user != null) {
+                    db.collection("users").document(user.uid).get()
+                        .addOnSuccessListener { document ->
+                            if (document.exists()) {
+                                onSuccess(false)
+                            } else {
+                                onSuccess(true)
+                            }
+                        }
+                        .addOnFailureListener { e -> onFailure(e) }
+                } else {
+                    onFailure(Exception("User is null after Google Sign-In"))
+                }
+            }
+            .addOnFailureListener { e -> onFailure(e) }
     }
 
     fun sendPasswordResetEmail(email: String): Task<Void> {

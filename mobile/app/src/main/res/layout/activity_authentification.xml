@@ -20,15 +20,16 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="16dp"
-            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:paddingHorizontal="16dp"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
         >
 
             <ImageView
-                android:layout_width="250dp"
-                android:layout_height="250dp"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
                 android:src="@drawable/ic_logo_uber_fight"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="10dp"
@@ -93,20 +94,25 @@
                 app:cornerRadius="4dp"
                 android:text="@string/se_connecter"
             />
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvRegister"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/cr_e_un_compte"
-            android:textColor="@color/black"
-            android:textAllCaps="true"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="30dp"
-        />
+            <com.google.android.gms.common.SignInButton
+                android:id="@+id/btnGoogleSignIn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:buttonSize="wide" />
+
+            <TextView
+                android:id="@+id/tvRegister"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cr_e_un_compte"
+                android:textColor="@color/black"
+                android:textAllCaps="true"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
     </RelativeLayout>
 </layout>

@@ -1,77 +1,118 @@
 package com.example.mobile_uber_fight.ui.fighter
 
 import android.app.AlertDialog
+import android.net.Uri
 import android.os.Bundle
 import android.util.Patterns
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.DialogEditProfileBinding
-import com.example.mobile_uber_fight.repositories.UserRepository
 import com.example.mobile_uber_fight.databinding.FragmentFighterProfileBinding
+import com.example.mobile_uber_fight.repositories.UserRepository
 
 class FighterProfileFragment : Fragment() {
 
     private var _binding: FragmentFighterProfileBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding
+
     private val userRepository = UserRepository()
 
     private var currentUsername: String = ""
     private var currentEmail: String = ""
 
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            uploadProfileImage(it)
+        }
+    }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentFighterProfileBinding.inflate(inflater, container, false)
+        return binding!!.root
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         loadUserProfile()
 
-        binding.btnEditProfile.setOnClickListener {
+        binding?.ivEditPhoto?.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
+
+        binding?.ivProfile?.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
+
+        binding?.btnEditProfile?.setOnClickListener {
             showEditProfileDialog()
         }
 
-        binding.btnSettings.setOnClickListener {
-            findNavController().navigate(R.id.action_fighterProfileFragment_to_settingsFragment)
+        binding?.btnSettings?.setOnClickListener {
+            findNavController().navigate(R.id.settingsFragment)
         }
     }
 
     private fun loadUserProfile() {
         userRepository.getCurrentUser(
             onSuccess = { user ->
+                if (_binding == null) return@getCurrentUser
                 if (user != null) {
                     currentUsername = user.username
                     currentEmail = user.email
-                    binding.tvFullName.text = currentUsername.ifEmpty {
-                        "-"
-                    }
-
-                    binding.tvEmail.text = user.email.ifEmpty {
-                        "-"
-                    }
+                    binding?.tvFullName?.text = currentUsername.ifEmpty { "-" }
+                    binding?.tvEmail?.text = user.email.ifEmpty { "-" }
 
                     val roleText = when (user.role.uppercase()) {
                         "CLIENT" -> "Statut: Client"
                         "FIGHTER" -> "Statut: Bagarreur"
                         else -> "Statut: ${user.role}"
                     }
-                    binding.tvStatus.text = roleText
-                } else {
-                    binding.tvFullName.text = "-"
-                    binding.tvEmail.text = "-"
-                    binding.tvStatus.text = "Statut: -"
+                    binding?.tvStatus?.text = roleText
+
+                    if (user.photoUrl.isNotEmpty()) {
+                        Glide.with(this)
+                            .load(user.photoUrl)
+                            .placeholder(R.drawable.ic_profile)
+                            .error(R.drawable.ic_profile)
+                            .into(binding!!.ivProfile)
+                    }
                 }
             },
             onFailure = { e ->
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.erreur_mise_a_jour_profil),
-                    Toast.LENGTH_SHORT
-                ).show()
-                binding.tvFullName.text = "-"
-                binding.tvEmail.text = "-"
-                binding.tvStatus.text = "Statut: -"
+                if (_binding == null) return@getCurrentUser
+                Toast.makeText(requireContext(), "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    private fun uploadProfileImage(uri: Uri) {
+        Toast.makeText(requireContext(), "Téléchargement en cours...", Toast.LENGTH_SHORT).show()
+        
+        userRepository.uploadProfilePicture(uri,
+            onSuccess = { downloadUrl ->
+                if (_binding == null) return@uploadProfilePicture
+                Toast.makeText(requireContext(), "Photo mise à jour !", Toast.LENGTH_SHORT).show()
+                
+                Glide.with(this)
+                    .load(downloadUrl)
+                    .placeholder(R.drawable.ic_profile)
+                    .into(binding!!.ivProfile)
+            },
+            onFailure = { e ->
+                if (_binding == null) return@uploadProfilePicture
+                Toast.makeText(requireContext(), "Échec: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -94,11 +135,7 @@ class FighterProfileFragment : Fragment() {
                 val email = dialogBinding.etEmail.text.toString().trim()
 
                 if (username.isEmpty() || email.isEmpty()) {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.veuillez_remplir_tous_les_champs),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireContext(), "Veuillez remplir tous les champs", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
 
@@ -120,23 +157,17 @@ class FighterProfileFragment : Fragment() {
             username = username,
             email = email,
             onSuccess = {
+                if (_binding == null) return@updateUserProfile
                 currentUsername = username
                 currentEmail = email
-                binding.tvFullName.text = username
-                binding.tvEmail.text = email
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.profil_mis_a_jour),
-                    Toast.LENGTH_SHORT
-                ).show()
+                binding?.tvFullName?.text = username
+                binding?.tvEmail?.text = email
+                Toast.makeText(requireContext(), "Profil mis à jour", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             },
-            onFailure = { e: Exception ->
-                Toast.makeText(
-                    requireContext(),
-                    "${getString(R.string.erreur_mise_a_jour_profil)}: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+            onFailure = { e ->
+                if (_binding == null) return@updateUserProfile
+                Toast.makeText(requireContext(), "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         )
     }

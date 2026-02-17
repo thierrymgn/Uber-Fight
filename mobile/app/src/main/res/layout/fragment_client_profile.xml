@@ -19,6 +19,34 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivProfile"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginTop="24dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_profile"
+            android:background="#E0E0E0"
+            android:padding="2dp"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:strokeWidth="2dp"
+            app:strokeColor="@color/black"
+            app:layout_constraintTop_toBottomOf="@id/tvProfileTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <ImageView
+            android:id="@+id/ivEditPhoto"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_menu_camera"
+            android:background="@drawable/bg_rounded_card"
+            android:backgroundTint="@color/black"
+            android:padding="8dp"
+            app:tint="@color/white"
+            app:layout_constraintBottom_toBottomOf="@id/ivProfile"
+            app:layout_constraintEnd_toEndOf="@id/ivProfile" />
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardProfileInfo"
             android:layout_width="0dp"
@@ -27,7 +55,7 @@
             app:cardElevation="2dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvProfileTitle">
+            app:layout_constraintTop_toBottomOf="@id/ivProfile">
 
             <LinearLayout
                 android:layout_width="match_parent"

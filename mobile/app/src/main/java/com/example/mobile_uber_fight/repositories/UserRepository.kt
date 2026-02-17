@@ -1,16 +1,22 @@
 package com.example.mobile_uber_fight.repositories
 
+import android.net.Uri
 import android.util.Log
 import com.example.mobile_uber_fight.models.User
+import com.example.mobile_uber_fight.models.UserSettings
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.FirebaseStorage
 
 class UserRepository {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
     fun updateUserLocation(latitude: Double, longitude: Double) {
         val currentUser = auth.currentUser
@@ -89,52 +95,55 @@ class UserRepository {
             }
     }
 
-    fun getCurrentUser(onSuccess: (User?) -> Unit, onFailure: (Exception) -> Unit) {
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            db.collection("users").document(currentUser.uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val user = document.toObject(User::class.java)
-                        onSuccess(user)
-                    } else {
-                        onSuccess(null)
-                    }
-                }
-                .addOnFailureListener { e ->
-                    onFailure(e)
-                }
-        } else {
-            onSuccess(null)
+    fun createUser(user: User): Task<Void> {
+        return db.collection("users").document(user.uid).set(user).onSuccessTask {
+            val defaultSettings = UserSettings()
+            db.collection("userSettings").document(user.uid).set(defaultSettings)
         }
     }
 
-    fun updateUserProfile(
-        username: String,
-        email: String,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            val updates = hashMapOf<String, Any>(
-                "username" to username,
-                "email" to email
-            )
+    fun getCurrentUser(onSuccess: (User?) -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onFailure(Exception("User not logged in"))
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                onSuccess(document.toObject(User::class.java))
+            }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
 
-            db.collection("users").document(currentUser.uid)
-                .update(updates)
-                .addOnSuccessListener {
-                    Log.d("UserRepository", "User profile updated successfully.")
-                    onSuccess()
+    fun updateUserProfile(username: String, email: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onFailure(Exception("User not logged in"))
+        db.collection("users").document(uid)
+            .update(mapOf("username" to username, "email" to email))
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    fun uploadProfilePicture(imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onFailure(Exception("User not logged in"))
+        val fileRef = storage.reference.child("profile_images/$uid.jpg")
+
+        fileRef.putFile(imageUri)
+            .continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    task.exception?.let { throw it }
                 }
-                .addOnFailureListener { e ->
-                    Log.w("UserRepository", "Error updating user profile", e)
-                    onFailure(e)
+                fileRef.downloadUrl
+            }
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val downloadUri = task.result.toString()
+                    db.collection("users").document(uid)
+                        .update("photoUrl", downloadUri)
+                        .addOnSuccessListener {
+                            onSuccess(downloadUri)
+                        }
+                        .addOnFailureListener { e ->
+                            onFailure(e)
+                        }
+                } else {
+                    task.exception?.let { onFailure(it) }
                 }
-        } else {
-            onFailure(Exception("No authenticated user found."))
-        }
+            }
     }
 }

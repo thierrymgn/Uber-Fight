@@ -11,8 +11,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Search, UserPlus, RefreshCw } from 'lucide-react';
+import { AlertCircle, Search, UserPlus, RefreshCw, ArrowUpDown, Trophy } from 'lucide-react';
 import CreateUserDialog from '@/app/utilisateurs/components/create-user-dialog';
+import Leaderboard from '@/app/utilisateurs/components/leaderboard';
+
+type SortOption = 'default' | 'rating-desc' | 'rating-asc';
 import useLogger from '@/hooks/useLogger';
 
 export default function UtilisateursPage() {
@@ -23,6 +26,8 @@ export default function UtilisateursPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>('default');
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const { logError } = useLogger();
 
   const fetchUsers = useCallback(async () => {
@@ -61,14 +66,22 @@ export default function UtilisateursPage() {
   }, [user, authLoading, fetchUsers, logError]);
 
   const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
+    const filtered = users.filter((u) => {
       const matchesSearch =
         u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.email.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
       return matchesSearch && matchesRole;
     });
-  }, [users, searchQuery, roleFilter]);
+
+    if (sortOption === 'rating-desc') {
+      filtered.sort((a, b) => b.rating - a.rating);
+    } else if (sortOption === 'rating-asc') {
+      filtered.sort((a, b) => a.rating - b.rating);
+    }
+
+    return filtered;
+  }, [users, searchQuery, roleFilter, sortOption]);
 
   const handleUserDeleted = (userId: string) => {
     setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userId));
@@ -156,31 +169,69 @@ export default function UtilisateursPage() {
       {/* Filtres */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher par nom ou email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher par nom ou email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="flex gap-2">
+                {['ALL', 'ADMIN', 'FIGHTER', 'CLIENT'].map((role) => (
+                  <Button
+                    key={role}
+                    variant={roleFilter === role ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setRoleFilter(role)}
+                  >
+                    {role === 'ALL' ? 'Tous' : role}
+                  </Button>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-2">
-              {['ALL', 'ADMIN', 'FIGHTER', 'CLIENT'].map((role) => (
-                <Button
-                  key={role}
-                  variant={roleFilter === role ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setRoleFilter(role)}
-                >
-                  {role === 'ALL' ? 'Tous' : role}
-                </Button>
-              ))}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Trier par :</span>
+                <div className="flex gap-2">
+                  {(
+                    [
+                      { value: 'default', label: 'Par défaut' },
+                      { value: 'rating-desc', label: 'Meilleur rating' },
+                      { value: 'rating-asc', label: 'Pire rating' },
+                    ] as const
+                  ).map((option) => (
+                    <Button
+                      key={option.value}
+                      variant={sortOption === option.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSortOption(option.value)}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <Button
+                variant={showLeaderboard ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowLeaderboard(!showLeaderboard)}
+                className="sm:ml-auto"
+              >
+                <Trophy className="h-4 w-4 mr-2" />
+                Leaderboard
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Leaderboard */}
+      {showLeaderboard && <Leaderboard users={users} />}
 
       {/* Table */}
       <UsersTable users={filteredUsers} onUserDeleted={handleUserDeleted} />

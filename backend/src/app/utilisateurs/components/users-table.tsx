@@ -35,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreHorizontal, Pencil, Trash2, Eye, Mail, AlertCircle } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Eye, Mail, AlertCircle, Star } from 'lucide-react';
 
 export interface UsersTableProps {
   users: User[];
@@ -131,6 +131,7 @@ export default function UsersTable({ users, onUserDeleted }: UsersTableProps) {
                   <TableHead>Utilisateur</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rôle</TableHead>
+                  <TableHead>Rating</TableHead>
                   <TableHead>Inscription</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -162,6 +163,13 @@ export default function UsersTable({ users, onUserDeleted }: UsersTableProps) {
                     </TableCell>
                     <TableCell>
                       <UserRoleTag role={user.role} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <span className="text-sm font-medium">{user.rating.toFixed(1)}</span>
+                        <span className="text-xs text-muted-foreground">({user.ratingCount})</span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(user.createdAt)}
