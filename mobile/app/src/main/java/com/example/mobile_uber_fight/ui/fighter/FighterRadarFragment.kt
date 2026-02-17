@@ -237,12 +237,12 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
             binding?.btnAcceptMission?.alpha = 0.5f
         } else {
             binding?.btnAcceptMission?.isEnabled = true
-            binding?.btnAcceptMission?.text = "ACCEPTER LA MISSION"
+            binding?.btnAcceptMission?.text = "ACCEPTER LE COMBAT"
             binding?.btnAcceptMission?.alpha = 1.0f
             
             binding?.btnAcceptMission?.setOnClickListener {
                 binding?.btnAcceptMission?.isEnabled = false
-                GrafanaLogger.logInfo("Fighter button clicked: Accept Mission", mapOf("fightId" to fight.id))
+                GrafanaLogger.logInfo("Fighter button clicked: Accept Fight", mapOf("fightId" to fight.id))
                 acceptFightOffer(fight)
             }
         }
