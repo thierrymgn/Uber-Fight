@@ -8,7 +8,12 @@ import type {
   RecentFight,
   FightStatus,
 } from '@/types/dashboard';
-import { FirebaseError, logFirebaseError, withPerformanceLogging, withApiMetrics } from '@/lib/grafana';
+import {
+  FirebaseError,
+  logFirebaseError,
+  withPerformanceLogging,
+  withApiMetrics,
+} from '@/lib/grafana';
 
 async function getUserDistribution(): Promise<UserDistribution> {
   const db = getAdminFirestore();

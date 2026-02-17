@@ -1,8 +1,5 @@
 import type { LogAttributeValue, OTLPAttribute } from './types';
-import type {
-  OTLPMetric,
-  OTLPMetricsPayload,
-} from './metric-types';
+import type { OTLPMetric, OTLPMetricsPayload } from './metric-types';
 
 // ============================================================================
 // CONF
