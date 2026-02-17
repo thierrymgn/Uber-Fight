@@ -8,7 +8,7 @@ import type {
   RecentFight,
   FightStatus,
 } from '@/types/dashboard';
-import { FirebaseError, logFirebaseError, withPerformanceLogging } from '@/lib/grafana';
+import { FirebaseError, logFirebaseError, withPerformanceLogging, withApiMetrics } from '@/lib/grafana';
 
 async function getUserDistribution(): Promise<UserDistribution> {
   const db = getAdminFirestore();
@@ -186,38 +186,40 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
 }
 
 export async function GET(request: Request) {
-  const authResult = await verifyAuth(request, ['ADMIN']);
+  return withApiMetrics('/api/dashboard/stats', 'GET', async () => {
+    const authResult = await verifyAuth(request, ['ADMIN']);
 
-  if (!authResult.success) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status });
-  }
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
 
-  try {
-    const [userDistribution, fightStatusDistribution, averageRating, recentFights] =
-      await Promise.all([
-        getUserDistribution(),
-        getFightStatusDistribution(),
-        getAverageRating(),
-        getRecentFights(5),
-      ]);
+    try {
+      const [userDistribution, fightStatusDistribution, averageRating, recentFights] =
+        await Promise.all([
+          getUserDistribution(),
+          getFightStatusDistribution(),
+          getAverageRating(),
+          getRecentFights(5),
+        ]);
 
-    const stats: DashboardStats = {
-      userDistribution,
-      fightStatusDistribution,
-      averageRating,
-      recentFights,
-    };
+      const stats: DashboardStats = {
+        userDistribution,
+        fightStatusDistribution,
+        averageRating,
+        recentFights,
+      };
 
-    return NextResponse.json(stats, { status: 200 });
-  } catch (error) {
-    console.error('Erreur lors de la récupération des stats dashboard:', error);
+      return NextResponse.json(stats, { status: 200 });
+    } catch (error) {
+      console.error('Erreur lors de la récupération des stats dashboard:', error);
 
-    return NextResponse.json(
-      {
-        error: 'Erreur serveur lors de la récupération des statistiques',
-        details: error instanceof Error ? error.message : 'Erreur inconnue',
-      },
-      { status: 500 }
-    );
-  }
+      return NextResponse.json(
+        {
+          error: 'Erreur serveur lors de la récupération des statistiques',
+          details: error instanceof Error ? error.message : 'Erreur inconnue',
+        },
+        { status: 500 }
+      );
+    }
+  });
 }

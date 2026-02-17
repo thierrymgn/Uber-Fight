@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendLog } from '@/lib/grafana/logger';
+import { pushCounter, pushHistogramValue } from '@/lib/grafana/metrics';
 
 const EXCLUDED_PATTERNS = [
   /^\/_next\/static\//,
@@ -64,6 +65,16 @@ export async function middleware(request: NextRequest) {
   }).catch((error) => {
     console.error('[Middleware] Failed to send log:', error);
   });
+
+  pushCounter('http.server.request_count', 1, {
+    'http.method': requestData.method,
+    'http.route': requestData.path,
+  }).catch(() => {});
+
+  pushHistogramValue('http.server.duration', duration, {
+    'http.method': requestData.method,
+    'http.route': requestData.path,
+  }).catch(() => {});
 
   return response;
 }
