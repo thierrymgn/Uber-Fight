@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.FragmentFighterRadarBinding
 import com.example.mobile_uber_fight.logger.GrafanaLogger
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.models.Fight
 import com.example.mobile_uber_fight.repositories.FightRepository
 import com.example.mobile_uber_fight.repositories.UserRepository
@@ -78,6 +79,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         GrafanaLogger.logDebug("FighterRadarFragment: onViewCreated")
+        GrafanaMetrics.screenView("fighter_radar")
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         setupLocationCallback()
@@ -304,6 +306,7 @@ class FighterRadarFragment : Fragment(), OnMapReadyCallback {
             onSuccess = {
                 if (isAdded && _binding != null) {
                     GrafanaLogger.logInfo("Mission accepted success", mapOf("fightId" to fight.id))
+                    GrafanaMetrics.fightAction("accept")
                     setLoadingState(false)
                     bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
                     Toast.makeText(requireContext(), "Mission acceptée !", Toast.LENGTH_LONG).show()

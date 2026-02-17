@@ -34,6 +34,7 @@ import com.example.mobile_uber_fight.repositories.UserRepository
 import com.example.mobile_uber_fight.ui.shared.RatingBottomSheetFragment
 import com.example.mobile_uber_fight.utils.DirectionsService
 import com.example.mobile_uber_fight.logger.GrafanaLogger
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -125,6 +126,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         GrafanaLogger.logDebug("ClientHomeFragment: onViewCreated")
+        GrafanaMetrics.screenView("client_home")
         initPlaces()
         
         val mapFragment = childFragmentManager.findFragmentById(binding!!.map.id) as SupportMapFragment
@@ -523,6 +525,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
             lng = center.longitude, 
             fightType = type,
             onSuccess = { fightId ->
+                GrafanaMetrics.fightAction("create", mapOf("fightType" to type))
                 if (_binding != null) {
                     setLoadingState(false)
                     currentFightId = fightId
@@ -543,6 +546,7 @@ class ClientHomeFragment : Fragment(), OnMapReadyCallback {
         fightRepository.cancelFight(id,
             onSuccess = { 
                 GrafanaLogger.logInfo("Fight cancelled by client button")
+                GrafanaMetrics.fightAction("cancel")
                 if (_binding != null) setLoadingState(false) 
             },
             onFailure = { e ->

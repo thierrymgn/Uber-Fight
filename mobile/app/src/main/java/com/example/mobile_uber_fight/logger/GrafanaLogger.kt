@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 object GrafanaLogger {
 
     private const val TAG = "GrafanaLogger"
-    private val API_URL = BuildConfig.GRAFANA_API_URL
+    private val API_URL = BuildConfig.GRAFANA_API_URL + "/api/logs"
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

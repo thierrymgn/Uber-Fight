@@ -14,6 +14,7 @@ import com.bumptech.glide.Glide
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.DialogEditProfileBinding
 import com.example.mobile_uber_fight.databinding.FragmentClientProfileBinding
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.repositories.UserRepository
 
 class ClientProfileFragment : Fragment() {
@@ -61,6 +62,8 @@ class ClientProfileFragment : Fragment() {
         binding.btnSettings.setOnClickListener {
             findNavController().navigate(R.id.action_clientProfileFragment_to_settingsFragment)
         }
+
+        GrafanaMetrics.screenView("client_Profil")
     }
 
     private fun loadUserProfile() {

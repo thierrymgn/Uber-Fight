@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mobile_uber_fight.adapter.HistoryAdapter
 import com.example.mobile_uber_fight.databinding.FragmentClientHistoryBinding
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.repositories.FightRepository
 
 class ClientHistoryFragment : Fragment() {
@@ -32,6 +33,7 @@ class ClientHistoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         loadHistory()
+        GrafanaMetrics.screenView("client_history")
     }
 
     private fun setupRecyclerView() {

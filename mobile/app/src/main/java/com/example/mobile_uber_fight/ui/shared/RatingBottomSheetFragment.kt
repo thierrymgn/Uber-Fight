@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.example.mobile_uber_fight.databinding.FragmentRatingBottomSheetBinding
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.repositories.UserRepository
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
@@ -76,6 +77,7 @@ class RatingBottomSheetFragment : BottomSheetDialogFragment() {
                     rating,
                     comment,
                     onSuccess = {
+                        GrafanaMetrics.userAction("rating_submit", mapOf("rating" to rating))
                         Toast.makeText(requireContext(), "Merci pour votre avis !", Toast.LENGTH_SHORT).show()
                         onRatingSubmitted?.invoke()
                         dismiss()
@@ -90,6 +92,7 @@ class RatingBottomSheetFragment : BottomSheetDialogFragment() {
     }
 
     private fun skipRating() {
+        GrafanaMetrics.userAction("rating_skip")
         onRatingSubmitted?.invoke()
         dismiss()
     }
