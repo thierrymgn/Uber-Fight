@@ -159,6 +159,30 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
     return [];
   }
 
+  const userIds = new Set<string>();
+  snapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    if (data.requesterId) userIds.add(data.requesterId);
+    if (data.fighterId) userIds.add(data.fighterId);
+  });
+
+  const userNames: Record<string, string> = {};
+  if (userIds.size > 0) {
+    try {
+      const userDocs = await Promise.all(
+        Array.from(userIds).map((id) => db.collection('users').doc(id).get())
+      );
+      userDocs.forEach((userDoc) => {
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          userNames[userDoc.id] = userData?.username || 'Inconnu';
+        }
+      });
+    } catch (error) {
+      logFirebaseError(error as FirebaseError, 'fetchUserNames', { userIds: JSON.stringify(Array.from(userIds)) });
+    }
+  }
+
   const fights: RecentFight[] = [];
 
   for (const doc of snapshot.docs) {
@@ -179,8 +203,8 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
 
     fights.push({
       id: doc.id,
-      clientName: data.clientName || 'Client inconnu',
-      fighterName: data.fighterName || 'Bagarreur inconnu',
+      clientName: userNames[data.requesterId] || 'Client inconnu',
+      fighterName: userNames[data.fighterId] || 'Bagarreur inconnu',
       status: (data.status?.toUpperCase() || 'PENDING') as FightStatus,
       createdAt: createdAtDate ? createdAtDate.toISOString() : null,
       location: locationString,

@@ -454,8 +454,6 @@ export default function DashboardPage() {
 
   const grafanaDashboardUrl = process.env.NEXT_PUBLIC_GRAFANA_DASHBOARD_URL;
 
-  console.log('Dashboard stats loaded:', grafanaDashboardUrl);
-
   return (
     <div className="p-6">
       <div className="space-y-6">
