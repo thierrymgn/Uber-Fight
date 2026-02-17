@@ -24,6 +24,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.example.mobile_uber_fight.logger.GrafanaLogger
 import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import kotlinx.coroutines.launch
 
@@ -96,6 +97,7 @@ class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
             binding?.tvNoActiveMission?.visibility = View.VISIBLE
             binding?.cardMission?.visibility = View.GONE
             binding?.overlayInProgress?.visibility = View.GONE
+            binding?.btnCancelMission?.visibility = View.GONE
             stopChrono()
             googleMap?.clear()
             return
@@ -116,12 +118,15 @@ class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
                     GrafanaMetrics.fightAction("start")
                     fightRepository.updateFightStatus(fight.id, "IN_PROGRESS", {})
                 }
+                binding?.btnCancelMission?.visibility = View.VISIBLE
+                binding?.btnCancelMission?.setOnClickListener { handleCancelMission() }
                 stopChrono()
                 drawRouteToClient(fight)
             }
             "IN_PROGRESS" -> {
                 binding?.cardMission?.visibility = View.VISIBLE
                 binding?.overlayInProgress?.visibility = View.VISIBLE
+                binding?.btnCancelMission?.visibility = View.GONE
                 binding?.tvStatus?.text = "Combat en cours"
                 binding?.btnAction?.text = "TERMINER LE DUEL"
                 binding?.btnAction?.setBackgroundColor(Color.RED)
@@ -133,6 +138,29 @@ class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
                 googleMap?.clear()
             }
         }
+    }
+
+    private fun handleCancelMission() {
+        val fight = currentFight ?: return
+        binding?.btnCancelMission?.isEnabled = false
+        GrafanaLogger.logInfo("Fighter cancelling mission", mapOf("fightId" to fight.id))
+
+        fightRepository.releaseFight(fight.id,
+            onSuccess = {
+                if (isAdded && _binding != null) {
+                    GrafanaMetrics.fightAction("fighter_cancel")
+                    binding?.btnCancelMission?.isEnabled = true
+                    Toast.makeText(requireContext(), "Mission annulée", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onFailure = { e ->
+                if (isAdded && _binding != null) {
+                    GrafanaLogger.logError("Fighter cancel mission failed", e, mapOf("fightId" to fight.id))
+                    binding?.btnCancelMission?.isEnabled = true
+                    Toast.makeText(requireContext(), "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
     }
 
     private fun drawRouteToClient(fight: Fight) {

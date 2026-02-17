@@ -2,8 +2,10 @@ package com.example.mobile_uber_fight.repositories
 
 import android.net.Uri
 import android.util.Log
+import com.example.mobile_uber_fight.models.Review
 import com.example.mobile_uber_fight.models.User
 import com.example.mobile_uber_fight.models.UserSettings
+import com.google.firebase.firestore.Query
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
@@ -82,7 +84,7 @@ class UserRepository {
             "fightId" to fightId,
             "rating" to rating.toDouble(),
             "comment" to comment,
-            "createdAt" to com.google.firebase.Timestamp.now()
+            "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
         )
 
         db.collection("reviews")
@@ -93,6 +95,20 @@ class UserRepository {
             .addOnFailureListener { e ->
                 onFailure(e)
             }
+    }
+
+    fun getReviewsForUser(userId: String, onSuccess: (List<Review>) -> Unit, onFailure: (Exception) -> Unit) {
+        db.collection("reviews")
+            .whereEqualTo("toUserId", userId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { snapshots ->
+                val reviews = snapshots.map { doc ->
+                    doc.toObject(Review::class.java).copy(id = doc.id)
+                }
+                onSuccess(reviews)
+            }
+            .addOnFailureListener { e -> onFailure(e) }
     }
 
     fun createUser(user: User): Task<Void> {

@@ -14,8 +14,11 @@ import com.bumptech.glide.Glide
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.DialogEditProfileBinding
 import com.example.mobile_uber_fight.databinding.FragmentClientProfileBinding
+import com.example.mobile_uber_fight.adapter.ReviewAdapter
 import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.repositories.UserRepository
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 
 class ClientProfileFragment : Fragment() {
 
@@ -24,8 +27,8 @@ class ClientProfileFragment : Fragment() {
     private val userRepository = UserRepository()
 
     private var currentUsername: String = ""
-
     private var currentEmail: String = ""
+    private val reviewAdapter = ReviewAdapter(emptyList())
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -45,7 +48,11 @@ class ClientProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        binding.rvReviews.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvReviews.adapter = reviewAdapter
+
         loadUserProfile()
+        loadReviews()
 
         binding.ivEditPhoto.setOnClickListener {
             pickImageLauncher.launch("image/*")
@@ -87,6 +94,13 @@ class ClientProfileFragment : Fragment() {
                     }
                     binding.tvStatus.text = roleText
 
+                    binding.ratingBar.rating = user.rating.toFloat()
+                    if (user.ratingCount > 0) {
+                        binding.tvRating.text = String.format("%.1f (%d avis)", user.rating, user.ratingCount)
+                    } else {
+                        binding.tvRating.text = "Aucun avis"
+                    }
+
                     if (user.photoUrl.isNotEmpty()) {
                         Glide.with(this)
                             .load(user.photoUrl)
@@ -109,6 +123,28 @@ class ClientProfileFragment : Fragment() {
                 binding.tvFullName.text = "-"
                 binding.tvEmail.text = "-"
                 binding.tvStatus.text = "Statut: -"
+            }
+        )
+    }
+
+    private fun loadReviews() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        userRepository.getReviewsForUser(uid,
+            onSuccess = { reviews ->
+                if (_binding == null) return@getReviewsForUser
+                if (reviews.isEmpty()) {
+                    binding.tvNoReviews.visibility = View.VISIBLE
+                    binding.rvReviews.visibility = View.GONE
+                } else {
+                    binding.tvNoReviews.visibility = View.GONE
+                    binding.rvReviews.visibility = View.VISIBLE
+                    reviewAdapter.updateList(reviews)
+                }
+            },
+            onFailure = {
+                if (_binding == null) return@getReviewsForUser
+                binding.tvNoReviews.visibility = View.VISIBLE
+                binding.rvReviews.visibility = View.GONE
             }
         )
     }

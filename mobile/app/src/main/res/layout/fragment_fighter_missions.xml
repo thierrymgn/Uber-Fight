@@ -117,6 +117,17 @@
                     android:layout_marginTop="24dp"
                     android:text="J'AI ATTEINT LE LIEU" />
 
+                <Button
+                    android:id="@+id/btnCancelMission"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="8dp"
+                    android:backgroundTint="#D32F2F"
+                    android:text="ANNULER LA MISSION"
+                    android:textColor="@android:color/white"
+                    android:visibility="gone" />
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
