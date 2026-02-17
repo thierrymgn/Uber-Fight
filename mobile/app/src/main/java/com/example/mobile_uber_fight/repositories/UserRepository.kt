@@ -82,7 +82,7 @@ class UserRepository {
             "fightId" to fightId,
             "rating" to rating.toDouble(),
             "comment" to comment,
-            "createdAt" to com.google.firebase.Timestamp.now()
+            "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
         )
 
         db.collection("reviews")
