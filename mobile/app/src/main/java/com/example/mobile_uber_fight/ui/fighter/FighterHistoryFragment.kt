@@ -1,4 +1,4 @@
-package com.example.mobile_uber_fight.ui.client
+package com.example.mobile_uber_fight.ui.fighter
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,12 +8,12 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.mobile_uber_fight.adapter.HistoryAdapter
-import com.example.mobile_uber_fight.databinding.FragmentClientHistoryBinding
+import com.example.mobile_uber_fight.databinding.FragmentFighterHistoryBinding
 import com.example.mobile_uber_fight.repositories.FightRepository
 
-class ClientHistoryFragment : Fragment() {
+class FighterHistoryFragment : Fragment() {
 
-    private var _binding: FragmentClientHistoryBinding? = null
+    private var _binding: FragmentFighterHistoryBinding? = null
     private val binding get() = _binding!!
 
     private val repository = FightRepository()
@@ -24,7 +24,7 @@ class ClientHistoryFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentClientHistoryBinding.inflate(inflater, container, false)
+        _binding = FragmentFighterHistoryBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -44,7 +44,7 @@ class ClientHistoryFragment : Fragment() {
 
     private fun loadHistory() {
         setLoading(true)
-        repository.getClientHistory(
+        repository.getFighterHistory(
             onSuccess = { fights ->
                 if (_binding != null) {
                     setLoading(false)
@@ -60,7 +60,7 @@ class ClientHistoryFragment : Fragment() {
             },
             onFailure = { e ->
                 if (_binding != null) {
-                    setLoading(false)
+                    setLoadingState(false)
                     Toast.makeText(requireContext(), "Erreur : ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -68,6 +68,10 @@ class ClientHistoryFragment : Fragment() {
     }
 
     private fun setLoading(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+
+    private fun setLoadingState(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 

@@ -16,6 +16,11 @@
         android:label="fragment_fighter_missions"
         tools:layout="@layout/fragment_fighter_missions" />
     <fragment
+        android:id="@+id/fighterHistoryFragment"
+        android:name="com.example.mobile_uber_fight.ui.fighter.FighterHistoryFragment"
+        android:label="fragment_fighter_history"
+        tools:layout="@layout/fragment_fighter_history" />
+    <fragment
         android:id="@+id/fighterProfileFragment"
         android:name="com.example.mobile_uber_fight.ui.fighter.FighterProfileFragment"
         android:label="fragment_fighter_profile"
@@ -29,4 +34,5 @@
         android:name="com.example.mobile_uber_fight.ui.settings.SettingsFragment"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" />
+
 </navigation>
