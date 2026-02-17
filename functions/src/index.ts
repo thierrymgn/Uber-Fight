@@ -2,8 +2,10 @@ import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/fire
 import * as admin from "firebase-admin";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { logFunction } from "./lib/grafana-logger";
+import { pushCounter } from "./lib/grafana-metrics";
 
 export { deleteUser, updateUser, createUser } from "./users";
+export { collectBusinessMetrics } from "./scheduled-metrics";
 
 admin.initializeApp();
 
@@ -28,6 +30,11 @@ export const onFightStatusChanged = onDocumentUpdated("fights/{fightId}", async 
         clientUserId,
         fighterUserId,
     });
+
+    pushCounter("business.fight.status_change", 1, {
+        old_status: before?.status || "unknown",
+        new_status: newStatus || "unknown",
+    }).catch(() => {});
 
     let title = "";
     let body = "";
@@ -99,6 +106,8 @@ export const onReviewCreated = onDocumentCreated("reviews/{reviewId}", async (ev
     const reviewId = event.params.reviewId;
     
     await logFunction("onReviewCreated", "Review trigger started", "info", { reviewId });
+
+    pushCounter("business.review.created", 1).catch(() => {});
 
     const snapshot = event.data;
     if (!snapshot) {
