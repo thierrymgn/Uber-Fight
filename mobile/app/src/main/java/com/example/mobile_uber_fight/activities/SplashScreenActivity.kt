@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobile_uber_fight.R
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.utils.RoleManager
 import com.google.firebase.auth.FirebaseAuth
 
@@ -22,6 +23,8 @@ class SplashScreenActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        GrafanaMetrics.counter("mobile.app.launch")
 
         Handler(Looper.getMainLooper()).postDelayed({
             val currentUser = FirebaseAuth.getInstance().currentUser

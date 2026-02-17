@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.ActivityAuthentificationBinding
 import com.example.mobile_uber_fight.logger.GrafanaLogger
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.repositories.AuthRepository
 import com.example.mobile_uber_fight.utils.RoleManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -36,6 +37,7 @@ class AuthentificationActivity : AppCompatActivity() {
                 firebaseAuthWithGoogle(idToken)
             } catch (e: ApiException) {
                 GrafanaLogger.logError("Google Sign-In failed", e)
+                GrafanaMetrics.authEvent("login", success = false, method = "google")
                 Toast.makeText(this, "Google Sign-In failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
@@ -96,6 +98,7 @@ class AuthentificationActivity : AppCompatActivity() {
                     startActivity(Intent(this, RoleSelectionActivity::class.java))
                     finish()
                 } else {
+                    GrafanaMetrics.authEvent("login", success = true, method = "google")
                     GrafanaLogger.logInfo("Existing user via Google, routing to main interface")
                     RoleManager.routeUser(
                         onSuccess = { role ->
@@ -117,6 +120,7 @@ class AuthentificationActivity : AppCompatActivity() {
             },
             onFailure = { e ->
                 GrafanaLogger.logError("Firebase Google Auth failed", e)
+                GrafanaMetrics.authEvent("login", success = false, method = "google")
                 Toast.makeText(this, "Erreur d'authentification Google: ${e.message}", Toast.LENGTH_LONG).show()
             }
         )
@@ -141,6 +145,7 @@ class AuthentificationActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 GrafanaLogger.logInfo("Login successful", mapOf("email" to email))
+                GrafanaMetrics.authEvent("login", success = true, method = "email")
                 RoleManager.routeUser(
                     onSuccess = { role ->
                         val intent = when (role) {
@@ -164,6 +169,7 @@ class AuthentificationActivity : AppCompatActivity() {
             }
             .addOnFailureListener { e ->
                 GrafanaLogger.logError("Login failed", e, mapOf("email" to email))
+                GrafanaMetrics.authEvent("login", success = false, method = "email")
                 Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }

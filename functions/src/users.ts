@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { logFunction } from "./lib/grafana-logger";
+import { pushCounter } from "./lib/grafana-metrics";
 
 const REGION = "europe-west1";
 const VALID_ROLES = ["CLIENT", "FIGHTER", "ADMIN"];
@@ -46,6 +47,8 @@ export const deleteUser = onCall({ region: REGION }, async (request) => {
             callerUid,
             userIdToDelete,
         });
+
+        pushCounter("business.user.deleted", 1).catch(() => {});
 
         return { success: true, message: "Utilisateur supprimé avec succès." };
     } catch (error) {
@@ -228,6 +231,8 @@ export const createUser = onCall({ region: REGION }, async (request) => {
             email: email.trim(),
             role: normalizedRole,
         });
+
+        pushCounter("business.user.created", 1, { role: normalizedRole }).catch(() => {});
 
         return {
             success: true,

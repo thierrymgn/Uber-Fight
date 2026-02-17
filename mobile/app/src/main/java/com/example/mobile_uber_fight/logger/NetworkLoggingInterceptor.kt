@@ -45,9 +45,12 @@ class NetworkLoggingInterceptor : Interceptor {
     }
 
     private fun handleResponse(url: String, method: String, statusCode: Int, duration: Long) {
+        val sanitized = sanitizeUrl(url)
+        val route = extractRoute(sanitized)
+
         val attributes = mutableMapOf<String, Any>(
             "category" to "network",
-            "url" to sanitizeUrl(url),
+            "url" to sanitized,
             "method" to method,
             "statusCode" to statusCode,
             "durationMs" to duration
@@ -68,6 +71,8 @@ class NetworkLoggingInterceptor : Interceptor {
                 GrafanaLogger.logInfo("Network Success", attributes)
             }
         }
+
+        GrafanaMetrics.networkRequest(method, route, statusCode, duration)
     }
 
     private fun logNetworkError(url: String, method: String, error: Exception, duration: Long) {
@@ -79,6 +84,15 @@ class NetworkLoggingInterceptor : Interceptor {
             "errorType" to error.javaClass.simpleName
         )
         GrafanaLogger.logError("Network Connection Failed: ${error.message}", error, attributes)
+    }
+
+    private fun extractRoute(url: String): String {
+        return try {
+            val uri = java.net.URI(url)
+            uri.path ?: url
+        } catch (e: Exception) {
+            url.substringBefore("?").substringAfter("//").substringAfter("/", "/")
+        }
     }
 
     private fun sanitizeUrl(url: String): String {

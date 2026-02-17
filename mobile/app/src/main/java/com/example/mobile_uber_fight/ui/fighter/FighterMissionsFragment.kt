@@ -24,6 +24,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import kotlinx.coroutines.launch
 
 class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
@@ -55,6 +56,7 @@ class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        GrafanaMetrics.screenView("fighter_missions")
         val mapFragment = childFragmentManager.findFragmentById(binding!!.map.id) as SupportMapFragment
         mapFragment.getMapAsync(this)
         listenForActiveFight()
@@ -111,6 +113,7 @@ class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
                 binding?.btnAction?.text = "J'AI ATTEINT LE LIEU"
                 binding?.btnAction?.setBackgroundColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.color.design_default_color_primary))
                 binding?.btnAction?.setOnClickListener {
+                    GrafanaMetrics.fightAction("start")
                     fightRepository.updateFightStatus(fight.id, "IN_PROGRESS", {})
                 }
                 stopChrono()
@@ -123,6 +126,7 @@ class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
                 binding?.btnAction?.text = "TERMINER LE DUEL"
                 binding?.btnAction?.setBackgroundColor(Color.RED)
                 binding?.btnAction?.setOnClickListener {
+                    GrafanaMetrics.fightAction("complete")
                     fightRepository.updateFightStatus(fight.id, "COMPLETED", {})
                 }
                 startChrono()
@@ -173,7 +177,6 @@ class FighterMissionsFragment : Fragment(), OnMapReadyCallback {
 
     private fun openRatingAndReset(fight: Fight) {
         val ratingFragment = RatingBottomSheetFragment.newInstance(fight.requesterId, fight.id) {
-            // Redirect or refresh
         }
         ratingFragment.show(childFragmentManager, "Rating")
     }
