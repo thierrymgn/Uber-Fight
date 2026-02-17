@@ -15,8 +15,11 @@ import com.bumptech.glide.Glide
 import com.example.mobile_uber_fight.R
 import com.example.mobile_uber_fight.databinding.DialogEditProfileBinding
 import com.example.mobile_uber_fight.databinding.FragmentFighterProfileBinding
+import com.example.mobile_uber_fight.adapter.ReviewAdapter
 import com.example.mobile_uber_fight.logger.GrafanaMetrics
 import com.example.mobile_uber_fight.repositories.UserRepository
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
 
 class FighterProfileFragment : Fragment() {
 
@@ -27,6 +30,7 @@ class FighterProfileFragment : Fragment() {
 
     private var currentUsername: String = ""
     private var currentEmail: String = ""
+    private val reviewAdapter = ReviewAdapter(emptyList())
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -46,7 +50,11 @@ class FighterProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding?.rvReviews?.layoutManager = LinearLayoutManager(requireContext())
+        binding?.rvReviews?.adapter = reviewAdapter
+
         loadUserProfile()
+        loadReviews()
 
         binding?.ivEditPhoto?.setOnClickListener {
             pickImageLauncher.launch("image/*")
@@ -84,6 +92,13 @@ class FighterProfileFragment : Fragment() {
                     }
                     binding?.tvStatus?.text = roleText
 
+                    binding?.ratingBar?.rating = user.rating.toFloat()
+                    if (user.ratingCount > 0) {
+                        binding?.tvRating?.text = String.format("%.1f (%d avis)", user.rating, user.ratingCount)
+                    } else {
+                        binding?.tvRating?.text = "Aucun avis"
+                    }
+
                     if (user.photoUrl.isNotEmpty()) {
                         Glide.with(this)
                             .load(user.photoUrl)
@@ -96,6 +111,28 @@ class FighterProfileFragment : Fragment() {
             onFailure = { e ->
                 if (_binding == null) return@getCurrentUser
                 Toast.makeText(requireContext(), "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    private fun loadReviews() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        userRepository.getReviewsForUser(uid,
+            onSuccess = { reviews ->
+                if (_binding == null) return@getReviewsForUser
+                if (reviews.isEmpty()) {
+                    binding?.tvNoReviews?.visibility = View.VISIBLE
+                    binding?.rvReviews?.visibility = View.GONE
+                } else {
+                    binding?.tvNoReviews?.visibility = View.GONE
+                    binding?.rvReviews?.visibility = View.VISIBLE
+                    reviewAdapter.updateList(reviews)
+                }
+            },
+            onFailure = {
+                if (_binding == null) return@getReviewsForUser
+                binding?.tvNoReviews?.visibility = View.VISIBLE
+                binding?.rvReviews?.visibility = View.GONE
             }
         )
     }
