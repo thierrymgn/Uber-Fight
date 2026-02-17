@@ -81,6 +81,25 @@ class FightRepository {
             }
     }
 
+    fun releaseFight(fightId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        GrafanaLogger.logInfo("Releasing fight back to pending", mapOf("fightId" to fightId))
+        fightsCollection.document(fightId)
+            .update(
+                mapOf(
+                    "status" to "PENDING",
+                    "fighterId" to null
+                )
+            )
+            .addOnSuccessListener {
+                GrafanaLogger.logInfo("Fight released successfully", mapOf("fightId" to fightId))
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                GrafanaLogger.logError("Fight release failed", e, mapOf("fightId" to fightId))
+                onFailure(e)
+            }
+    }
+
     fun listenToPendingFights(onUpdate: (List<Fight>) -> Unit, onFailure: (Exception) -> Unit) {
         fightsCollection
             .whereEqualTo("status", "PENDING")
