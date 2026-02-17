@@ -7,7 +7,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="?android:attr/windowBackground"
-        tools:context=".ui.client.ClientHistoryFragment">
+        tools:context=".ui.fighter.FighterHistoryFragment">
 
         <TextView
             android:id="@+id/tvHistoryTitle"
@@ -15,7 +15,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="32dp"
-            android:text="Mes Combats"
+            android:text="Mes Courses Terminer"
             android:textAppearance="?attr/textAppearanceHeadlineLarge"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -26,7 +26,7 @@
             android:layout_height="0dp"
             android:layout_marginTop="16dp"
             android:clipToPadding="false"
-            android:paddingBottom="16dp"
+            android:paddingBottom="80dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvHistoryTitle"
             tools:listitem="@layout/item_history_fight" />
@@ -60,11 +60,10 @@
                 android:textSize="64sp" />
 
             <TextView
-                android:id="@+id/tvNoHistory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Aucun historique"
+                android:text="Aucune course terminée"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textColor="?android:attr/textColorSecondary" />
         </LinearLayout>

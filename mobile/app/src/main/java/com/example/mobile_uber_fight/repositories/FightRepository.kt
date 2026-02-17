@@ -180,4 +180,50 @@ class FightRepository {
                 }
             }
     }
+    
+    fun getClientHistory(onSuccess: (List<Fight>) -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            onFailure(Exception("Utilisateur non connecté"))
+            return
+        }
+
+        fightsCollection
+            .whereEqualTo("requesterId", uid)
+            .whereIn("status", listOf("COMPLETED", "CANCELLED"))
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { snapshots ->
+                val history = snapshots.map { document ->
+                    document.toObject(Fight::class.java).copy(id = document.id)
+                }
+                onSuccess(history)
+            }
+            .addOnFailureListener { e ->
+                onFailure(e)
+            }
+    }
+
+    fun getFighterHistory(onSuccess: (List<Fight>) -> Unit, onFailure: (Exception) -> Unit) {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            onFailure(Exception("Utilisateur non connecté"))
+            return
+        }
+
+        fightsCollection
+            .whereEqualTo("fighterId", uid)
+            .whereIn("status", listOf("COMPLETED", "CANCELLED"))
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { snapshots ->
+                val history = snapshots.map { document ->
+                    document.toObject(Fight::class.java).copy(id = document.id)
+                }
+                onSuccess(history)
+            }
+            .addOnFailureListener { e ->
+                onFailure(e)
+            }
+    }
 }
