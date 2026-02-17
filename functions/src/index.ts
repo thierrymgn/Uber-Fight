@@ -43,12 +43,18 @@ export const onFightStatusChanged = onDocumentUpdated("fights/{fightId}", async 
     let clickAction = ""; 
     let userIdToRate = "";
 
-    if (newStatus === "ACCEPTED") {
+    if (newStatus === "PENDING" && before?.status === "ACCEPTED") {
+        title = "Mission annulée";
+        body = "Le bagarreur a annulé. Votre demande est de nouveau en attente.";
+        targetUserId = clientUserId;
+        clickAction = "OPEN_MAP";
+    }
+    else if (newStatus === "ACCEPTED") {
         title = "Combat Accepté ! 🥊";
         body = "Un bagarreur est en route vers vous.";
         targetUserId = clientUserId;
         clickAction = "OPEN_MAP";
-    } 
+    }
     else if (newStatus === "IN_PROGRESS") {
         title = "Le duel commence ! 🔔";
         body = "Préparez-vous à en découdre.";
