@@ -179,7 +179,9 @@ async function getRecentFights(limitCount: number = 5): Promise<RecentFight[]> {
         }
       });
     } catch (error) {
-      logFirebaseError(error as FirebaseError, 'fetchUserNames', { userIds: JSON.stringify(Array.from(userIds)) });
+      logFirebaseError(error as FirebaseError, 'fetchUserNames', {
+        userIds: JSON.stringify(Array.from(userIds)),
+      });
     }
   }
 
