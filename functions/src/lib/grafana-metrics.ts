@@ -95,6 +95,16 @@ function attributesToOTLP(
   );
 }
 
+const counterAccumulator = new Map<string, number>();
+const processStartTimeNano = String(Date.now() * 1e6);
+
+function getCounterKey(name: string, attributes?: Record<string, LogAttributeValue>): string {
+  if (!attributes) return name;
+  const sortedKeys = Object.keys(attributes).sort();
+  const parts = sortedKeys.map((k) => `${k}=${attributes[k]}`);
+  return `${name}|${parts.join(",")}`;
+}
+
 async function sendMetrics(metrics: OTLPMetric[]): Promise<void> {
   try {
     const config = getConfig();
@@ -154,6 +164,10 @@ export async function pushCounter(
   value: number,
   attributes?: Record<string, LogAttributeValue>
 ): Promise<void> {
+  const key = getCounterKey(name, attributes);
+  const accumulated = (counterAccumulator.get(key) || 0) + value;
+  counterAccumulator.set(key, accumulated);
+
   const now = String(Date.now() * 1e6);
 
   const metric: OTLPMetric = {
@@ -162,9 +176,9 @@ export async function pushCounter(
     sum: {
       dataPoints: [
         {
-          startTimeUnixNano: now,
+          startTimeUnixNano: processStartTimeNano,
           timeUnixNano: now,
-          asInt: value,
+          asInt: accumulated,
           attributes: attributes ? attributesToOTLP(attributes) : undefined,
         },
       ],
@@ -189,7 +203,7 @@ export async function pushGauge(
     gauge: {
       dataPoints: [
         {
-          startTimeUnixNano: now,
+          startTimeUnixNano: processStartTimeNano,
           timeUnixNano: now,
           asDouble: value,
           attributes: attributes ? attributesToOTLP(attributes) : undefined,
